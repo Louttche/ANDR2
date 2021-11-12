@@ -6,27 +6,44 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="Hello World!"
+    <FrameLayout
+        android:id="@+id/placeholder_main"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        app:layout_constraintBottom_toTopOf="@+id/bottomNavigationView"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <FrameLayout
-        android:id="@+id/frameLayout_map"
-        android:layout_width="387dp"
-        android:layout_height="531dp"
-        android:layout_marginTop="15dp"
-        android:layout_marginBottom="50dp"
+        <TextView
+            android:id="@+id/tv_main"
+            android:layout_width="276dp"
+            android:layout_height="35dp"
+            android:layout_gravity="top|center_horizontal"
+            android:layout_marginTop="20dp"
+            android:text="Welcome to Stalkr!"
+            android:textAlignment="center"
+            android:textSize="25dp" />
+
+        <FrameLayout
+            android:id="@+id/frameLayout_map"
+            android:layout_width="372dp"
+            android:layout_height="479dp"
+            android:layout_gravity="center|bottom"
+            android:layout_marginBottom="10dp"
+            android:paddingTop="30dp">
+
+        </FrameLayout>
+        android:text="Hello World!" />
+    </FrameLayout>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavigationView"
+        android:layout_width="409dp"
+        android:layout_height="80dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textView">
-
-    </FrameLayout>
+        app:menu="@menu/menu_bottomnav"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
