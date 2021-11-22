@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "565628399043",
+    "project_id": "stalkr-9c07b",
+    "storage_bucket": "stalkr-9c07b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:565628399043:android:1828dc40099909a6792176",
+        "android_client_info": {
+          "package_name": "com.example.stalkr"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "565628399043-vpnauoobcgdkvb4r9uo1qtoouu98euka.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBhxOP0ZqPGehyQdBO32Epx4G0ddS_J5Mo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "565628399043-vpnauoobcgdkvb4r9uo1qtoouu98euka.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

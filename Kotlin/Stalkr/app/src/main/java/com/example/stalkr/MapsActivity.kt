@@ -2,6 +2,7 @@ package com.example.stalkr
 
 import android.Manifest
 import android.app.Activity
+import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
@@ -9,6 +10,7 @@ import android.location.Location
 import android.location.LocationListener
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.core.app.ActivityCompat
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -23,14 +25,16 @@ import com.google.android.gms.location.*
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.firebase.firestore.FirebaseFirestore
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener {
 
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
     private lateinit var lastLocation: Location
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocationMarker: Marker? = null
+    private var otherUserLocationMarker: Marker? = null
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
@@ -97,6 +101,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun placeMarkerOnMap(location: Location) {
+        saveLocationToDb(location)
         val latLng = LatLng(location.latitude, location.longitude)
         if (userLocationMarker == null) {
             //Create a new marker
@@ -112,15 +117,49 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 //            userLocationMarker!!.rotation = location.bearing
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
         }
-
+        
 //        val markerOptions = MarkerOptions().position(currentLatLong)
 //        markerOptions.title("$currentLatLong")
 //        mMap.addMarker(markerOptions)
     }
 
+    private fun retrieveLocationFromDb() {
+        val db = FirebaseFirestore.getInstance()
+        db.collection("users")
+            .get()
+            .addOnSuccessListener { result ->
+                for (document in result) {
+                    Log.d(TAG, "${document.id} => ${document.data}")
+                }
+            }
+            .addOnFailureListener { exception ->
+                Log.w(TAG, "Error getting documents.", exception)
+            }
+    }
+
+    private fun saveLocationToDb(location: Location) {
+        val db = FirebaseFirestore.getInstance()
+        val user = hashMapOf(
+            "latitude" to location.latitude,
+            "longitude" to location.longitude
+        )
+
+        db.collection("users")
+            .add(user)
+            .addOnSuccessListener { documentReference ->
+                Log.d(TAG, "DocumentSnapshot added with ID: ${documentReference.id}")
+            }
+            .addOnFailureListener { e ->
+                Log.w(TAG, "Error adding document", e)
+            }
+    }
+
     override fun onMarkerClick(p0: Marker) = false
 
-//    override fun onLocationChanged(location: Location) {
+    override fun onLocationChanged(location: Location) {
+        placeMarkerOnMap(location)
+        saveLocationToDb(location)
+
 //        lastLocation = location
 //
 ////        if(marker != null) {
@@ -132,7 +171,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 //        markerOptions.title("$latlng")
 //        mMap.addMarker(markerOptions)
 //        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 12f))
-//    }
+    }
 
     // 1
     private lateinit var locationCallback: LocationCallback
