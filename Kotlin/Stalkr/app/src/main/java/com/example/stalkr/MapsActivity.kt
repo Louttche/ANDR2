@@ -17,17 +17,18 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.MarkerOptions
 import com.example.stalkr.databinding.ActivityMapsBinding
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
-import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.model.*
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener {
+
+    private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
 
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
@@ -35,6 +36,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocationMarker: Marker? = null
     private var otherUserLocationMarker: Marker? = null
+    private var userName: String = "Sally"
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
@@ -60,7 +62,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 super.onLocationResult(p0)
 
                 lastLocation = p0.lastLocation
+                saveLocationToDb(lastLocation)
                 placeMarkerOnMap(lastLocation)
+                retrieveLocationFromDb()
             }
         }
 
@@ -101,7 +105,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
     private fun placeMarkerOnMap(location: Location) {
-        saveLocationToDb(location)
         val latLng = LatLng(location.latitude, location.longitude)
         if (userLocationMarker == null) {
             //Create a new marker
@@ -110,29 +113,45 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 //            markerOptions.rotation(location.bearing)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
             userLocationMarker = mMap.addMarker(markerOptions)
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+//            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
         } else {
             //use the previously created marker
             userLocationMarker!!.position = latLng
 //            userLocationMarker!!.rotation = location.bearing
-            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+//            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
         }
-        
-//        val markerOptions = MarkerOptions().position(currentLatLong)
-//        markerOptions.title("$currentLatLong")
-//        mMap.addMarker(markerOptions)
+
+    }
+
+    private fun placeOtherMarkerOnMap(latLng: LatLng) {
+        if (otherUserLocationMarker == null) {
+            //Create a new marker
+            val markerOptions = MarkerOptions()
+            markerOptions.position(latLng)
+            markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+            otherUserLocationMarker = mMap.addMarker(markerOptions)
+
+        } else {
+            //use the previously created marker
+            otherUserLocationMarker!!.position = latLng
+        }
+
     }
 
     private fun retrieveLocationFromDb() {
-        val db = FirebaseFirestore.getInstance()
-        db.collection("users")
+//        val db = FirebaseFirestore.getInstance()
+        val userQuery = userCollectionRef
             .get()
-            .addOnSuccessListener { result ->
-                for (document in result) {
-                    Log.d(TAG, "${document.id} => ${document.data}")
+            userQuery.addOnSuccessListener {
+                for (document in it) {
+                    val latitude = document.get("latitude").toString().toDouble()
+                    val longitude = document.get("longitude").toString().toDouble()
+                    val latLng = LatLng(latitude, longitude)
+                    placeOtherMarkerOnMap(latLng)
                 }
             }
-            .addOnFailureListener { exception ->
+            userQuery.addOnFailureListener { exception ->
                 Log.w(TAG, "Error getting documents.", exception)
             }
     }
@@ -144,33 +163,22 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             "longitude" to location.longitude
         )
 
-        db.collection("users")
-            .add(user)
-            .addOnSuccessListener { documentReference ->
-                Log.d(TAG, "DocumentSnapshot added with ID: ${documentReference.id}")
+        val userQuery = userCollectionRef
+            .whereEqualTo("name", userName)
+            .get()
+        userQuery.addOnSuccessListener {
+            for(document in it) {
+                db.collection("users").document(document.id).set(user, SetOptions.merge())
             }
-            .addOnFailureListener { e ->
-                Log.w(TAG, "Error adding document", e)
-            }
+        }
     }
 
     override fun onMarkerClick(p0: Marker) = false
 
     override fun onLocationChanged(location: Location) {
+        // This really doesn't do anything, but I left it for testing purposes.
         placeMarkerOnMap(location)
         saveLocationToDb(location)
-
-//        lastLocation = location
-//
-////        if(marker != null) {
-////            marker.remove()
-////        }
-//
-//        val latlng = LatLng(location.latitude, location.longitude)
-//        val markerOptions = MarkerOptions().position(latlng)
-//        markerOptions.title("$latlng")
-//        mMap.addMarker(markerOptions)
-//        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latlng, 12f))
     }
 
     // 1
