@@ -6,9 +6,9 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
-import androidx.test.core.app.ApplicationProvider
 
 
 import com.google.firebase.messaging.FirebaseMessagingService
@@ -16,17 +16,14 @@ import com.google.firebase.messaging.RemoteMessage
 
 
 class FirebaseMessageReceiver : FirebaseMessagingService() {
-    // Override onMessageReceived() method to extract the
-    // title and
-    // body from the message passed in FCM
-
-    fun onNewToken() {}
+    override fun onNewToken(token: String) {
+        Log.d("", "The token: $token");
+    }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         // First case when notifications are received via
         // data event
-        // Here, 'title' and 'message' are the assumed names
-        // of JSON
+        // Here, 'title' and 'message' are the assumed names of JSON
         // attributes. Since here we do not have any data
         // payload, This section is commented out. It is
         // here only for reference purposes.
@@ -35,12 +32,8 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
                           remoteMessage.getData().get("message"));
         }*/
 
-        // Second case when notification payload is
-        // received.
+        // Second case when notification payload is received.
         if (remoteMessage.getNotification() != null) {
-            // Since the notification is received directly from
-            // FCM, the title and the body can be fetched
-            // directly as below.
             val title = remoteMessage.getNotification()!!.getTitle().toString()
             val body = remoteMessage.getNotification()!!.getBody().toString()
             showNotification(
@@ -56,7 +49,7 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
         message: String
     ): RemoteViews {
         val remoteViews = RemoteViews(
-            ApplicationProvider.getApplicationContext<Context>().getPackageName(),
+            applicationContext.packageName,
             R.layout.notification
         )
         remoteViews.setTextViewText(R.id.title, title)
@@ -91,7 +84,7 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
         // Create a Builder object using NotificationCompat
         // class. This will allow control over all the flags
         var builder: NotificationCompat.Builder = NotificationCompat.Builder(
-            ApplicationProvider.getApplicationContext<Context>(),
+            applicationContext,
             channel_id
         )
             .setSmallIcon(R.drawable.stalkr_logo)
