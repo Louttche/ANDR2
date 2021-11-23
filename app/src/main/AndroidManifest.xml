@@ -18,7 +18,8 @@
         android:theme="@style/Theme.Stalkr">
         <activity
             android:name=".activities.AuthActivity"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.Stalkr.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
