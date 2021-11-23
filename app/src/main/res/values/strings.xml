@@ -1,5 +1,12 @@
 <resources>
-    <string name="app_name">andr2_app</string>
-    <string name="Stalkr">Stalkr</string>
-    <string name="title_activity_main" />
+    <string name="app_name">Stalkr</string>
+    <string name="title_activity_maps">Stalkr</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="login">Login</string>
+    <string name="not_registered">Not registered?</string>
+    <string name="register">Register</string>
+    <string name="logo_image">logo image</string>
 </resources>
