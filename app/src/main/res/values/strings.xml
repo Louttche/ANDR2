@@ -1,5 +1,4 @@
 <resources>
-    <string name="app_name">andr2_app</string>
-    <string name="Stalkr">Stalkr</string>
-    <string name="title_activity_main" />
+    <string name="app_name">Stalkr</string>
+    <string name="title_activity_maps">Stalkr</string>
 </resources>
