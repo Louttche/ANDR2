@@ -13,11 +13,17 @@ import androidx.core.app.NotificationCompat
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
+import javax.inject.Inject
+import android.media.RingtoneManager
+import android.net.Uri
+
+
+class FirebaseMessage @Inject constructor(var title: String, var body: String, var receiverToken: String) {}
 
 
 class FirebaseMessageReceiver : FirebaseMessagingService() {
     override fun onNewToken(token: String) {
-        Log.d("", "The token: $token");
+        Log.d("FirebaseLog", "The token: $token");
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
@@ -81,6 +87,8 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
             PendingIntent.FLAG_ONE_SHOT
         )
 
+        val defaultSoundUri: Uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+
         // Create a Builder object using NotificationCompat
         // class. This will allow control over all the flags
         var builder: NotificationCompat.Builder = NotificationCompat.Builder(
@@ -95,6 +103,7 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
                     1000, 1000
                 )
             )
+            .setSound(defaultSoundUri)
             .setOnlyAlertOnce(true)
             .setContentIntent(pendingIntent)
 
@@ -133,4 +142,7 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
         }
         notificationManager!!.notify(0, builder.build())
     }
+
+    // @TODO Implement this function
+    fun sendMessage(message: FirebaseMessage) {}
 }
