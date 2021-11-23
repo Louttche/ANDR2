@@ -26,21 +26,34 @@ import com.google.android.gms.maps.model.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener {
+class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
+    GoogleMap.OnCameraMoveStartedListener,
+    GoogleMap.OnCameraMoveListener,
+    GoogleMap.OnCameraMoveCanceledListener,
+    GoogleMap.OnCameraIdleListener,
+    GoogleMap.OnMyLocationButtonClickListener {
 
+    // DB
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
 
+    // MAIN
     private lateinit var mMap: GoogleMap
     private lateinit var binding: ActivityMapsBinding
+
+    // LOCATION
+    private lateinit var currentLocation: Location
     private lateinit var lastLocation: Location
+    private var locationUpdateState = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var userLocationMarker: Marker? = null
     private var otherUserLocationMarker: Marker? = null
+    private var otherUserLocationMarkers: List<Marker>? = null
+
+    // AUTH
     private var userName: String = "Sally"
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
-
         private const val REQUEST_CHECK_SETTINGS = 2
     }
 
@@ -60,21 +73,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
+                Log.d(TAG,"onLocationResult")
 
-                lastLocation = p0.lastLocation
-                saveLocationToDb(lastLocation)
-                placeMarkerOnMap(lastLocation)
-                retrieveLocationFromDb()
+                if (::currentLocation.isInitialized)
+                    lastLocation = currentLocation
+                else
+                    lastLocation = p0.lastLocation
+
+                currentLocation = p0.lastLocation
+                saveLocationToDb(currentLocation)
+                placeMarkerOnMap(currentLocation)
+                retrieveLocationFromDB()
             }
         }
-
         createLocationRequest()
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-
         mMap.uiSettings.isZoomControlsEnabled = true
+        mMap.uiSettings.isMyLocationButtonEnabled = true
         mMap.setOnMarkerClickListener(this)
 
         setupMap()
@@ -89,66 +107,87 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
+            mMap.isMyLocationEnabled = true
+            mMap.setOnMyLocationButtonClickListener(this)
+            mMap.setOnCameraIdleListener(this);
+            mMap.setOnCameraMoveStartedListener(this);
+            mMap.setOnCameraMoveListener(this);
+            mMap.setOnCameraMoveCanceledListener(this);
+
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION), LOCATION_REQUEST_CODE)
             return
         }
-        mMap.isMyLocationEnabled = false
 
         fusedLocationClient.lastLocation.addOnSuccessListener(this) { location ->
             if (location != null){
-                lastLocation = location
-                val currentLatLong = LatLng(location.latitude, location.longitude)
                 placeMarkerOnMap(location)
-                mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(currentLatLong, 15f))
+                currentLocation = location
+                moveCamera(currentLocation);
             }
         }
     }
 
     private fun placeMarkerOnMap(location: Location) {
-        val latLng = LatLng(location.latitude, location.longitude)
+        val currentlatLng = LatLng(location.latitude, location.longitude)
+
         if (userLocationMarker == null) {
             //Create a new marker
             val markerOptions = MarkerOptions()
-            markerOptions.position(latLng)
-//            markerOptions.rotation(location.bearing)
+            markerOptions.position(currentlatLng)
+            //markerOptions.rotation(location.bearing)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
+            markerOptions.title(userName)
             userLocationMarker = mMap.addMarker(markerOptions)
-//            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
         } else {
             //use the previously created marker
-            userLocationMarker!!.position = latLng
-//            userLocationMarker!!.rotation = location.bearing
-//            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, 15f))
+            userLocationMarker!!.position = currentlatLng
+            //userLocationMarker!!.rotation = location.bearing
         }
 
-    }
-
-    private fun placeOtherMarkerOnMap(latLng: LatLng) {
-        if (otherUserLocationMarker == null) {
-            //Create a new marker
-            val markerOptions = MarkerOptions()
-            markerOptions.position(latLng)
-            markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-            otherUserLocationMarker = mMap.addMarker(markerOptions)
-
-        } else {
-            //use the previously created marker
-            otherUserLocationMarker!!.position = latLng
+        if (::lastLocation.isInitialized){
+            // if location has not actually changed, don't move camera
+            val lastlatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
+            if (currentlatLng != lastlatLng)
+                moveCamera(location)
         }
-
     }
 
-    private fun retrieveLocationFromDb() {
-//        val db = FirebaseFirestore.getInstance()
+    // TODO: change string to USER data type in 'user' param
+    private fun placeOtherMarkerOnMap(latLng: LatLng, user: String) {
+
+        if (otherUserLocationMarkers != null){
+            // if the user already has a marker, just update position
+            if (otherUserLocationMarkers!!.any{it.title == user}){
+                otherUserLocationMarkers!!.find{it.title == user}!!.position = latLng
+            } else {
+                val markerOptions = MarkerOptions()
+                markerOptions.position(latLng)
+                markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
+                markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                markerOptions.title(user)
+
+                otherUserLocationMarker = mMap.addMarker(markerOptions)
+                otherUserLocationMarkers!!.toMutableList().add(otherUserLocationMarker!!)
+            }
+        } else{
+            otherUserLocationMarkers = emptyList()
+        }
+    }
+
+    private fun retrieveLocationFromDB() {
         val userQuery = userCollectionRef
+            //.whereNotEqualTo("name", userName)
             .get()
             userQuery.addOnSuccessListener {
                 for (document in it) {
+                    //Log.d("DB - user","retrieveLocationFromDB - ${document.get("name").toString()}")
+
                     val latitude = document.get("latitude").toString().toDouble()
                     val longitude = document.get("longitude").toString().toDouble()
                     val latLng = LatLng(latitude, longitude)
-                    placeOtherMarkerOnMap(latLng)
+
+                    if (document.get("name").toString() != userName)
+                        placeOtherMarkerOnMap(latLng, document.get("name").toString())
                 }
             }
             userQuery.addOnFailureListener { exception ->
@@ -173,6 +212,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
+    // TODO: Pop up little window to show some more info/options for the selected user
     override fun onMarkerClick(p0: Marker) = false
 
     override fun onLocationChanged(location: Location) {
@@ -185,7 +225,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     private lateinit var locationCallback: LocationCallback
     // 2
     private lateinit var locationRequest: LocationRequest
-    private var locationUpdateState = false
 
     private fun startLocationUpdates() {
         //1
@@ -237,7 +276,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             }
         }
     }
-
     // 1
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
@@ -264,5 +302,41 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
     }
 
 
+    /* CAMERA STUFF */
 
+    private fun moveCamera(location: Location){
+        Log.d("camera", "in changeCamera");
+
+        val cameraPosition = CameraPosition.Builder()
+            .target(LatLng(location.latitude, location.longitude))
+            .zoom(12f)            // Sets the zoom
+            .build()                    // Creates a CameraPosition from the builder
+
+        mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
+    }
+
+    // when the camera starts moving.
+    override fun onCameraMoveStarted(p0: Int) {
+        Log.d(TAG, "onCameraMoveStarted");
+    }
+
+    // while the camera is moving or the user is interacting with the touch screen.
+    override fun onCameraMove() {
+        Log.d(TAG, "onCameraMove");
+    }
+
+    // when the current camera movement has been interrupted.
+    override fun onCameraMoveCanceled() {
+        Log.d(TAG, "onCameraMoveCanceled");
+    }
+
+    // when the camera stops moving and the user has stopped interacting with the map.
+    override fun onCameraIdle() {
+        Log.d(TAG, "onCameraIdle");
+    }
+
+    override fun onMyLocationButtonClick(): Boolean {
+        //changeCamera(lastLocation)
+        return true
+    }
 }
