@@ -17,7 +17,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Stalkr">
         <activity
-            android:name=".AuthActivity"
+            android:name=".activities.AuthActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -38,7 +38,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".activities.MapsActivity"
             android:label="@string/title_activity_maps" />
     </application>
 
