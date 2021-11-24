@@ -33,7 +33,7 @@
             app:layout_constraintVertical_bias="1.0">
 
             <ImageView
-                android:id="@+id/imageViewLogo"
+                android:id="@+id/imageViewLogoR"
                 android:layout_width="100dp"
                 android:layout_height="100dp"
                 android:layout_marginTop="16dp"
@@ -45,7 +45,7 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <TextView
-                android:id="@+id/textviewLogin"
+                android:id="@+id/textviewRegister"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -54,7 +54,7 @@
                 android:textAppearance="@style/TextAppearance.AppCompat.Display2"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/imageViewLogo" />
+                app:layout_constraintTop_toBottomOf="@+id/imageViewLogoR" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textFieldEmail"
@@ -64,9 +64,10 @@
                 android:layout_marginStart="24dp"
                 android:layout_marginTop="32dp"
                 android:layout_marginEnd="24dp"
+                app:startIconDrawable="@drawable/ic_baseline_mail_24"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/textviewLogin">
+                app:layout_constraintTop_toBottomOf="@+id/textviewRegister">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/textInputEmail"
@@ -79,6 +80,7 @@
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/textFieldPassword"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:passwordToggleEnabled="true"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="24dp"
@@ -92,6 +94,8 @@
                     android:id="@+id/textInputPassword"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:singleLine="true"
                     android:hint="@string/password" />
 
             </com.google.android.material.textfield.TextInputLayout>
@@ -100,7 +104,7 @@
                 android:id="@+id/buttonLogin"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="24dp"
                 android:paddingLeft="70dp"
                 android:paddingRight="70dp"
                 android:text="@string/login"
@@ -109,32 +113,42 @@
                 app:layout_constraintTop_toBottomOf="@+id/textFieldPassword" />
 
             <TextView
-                android:id="@+id/textViewSignUpMessage"
+                android:id="@+id/textViewAlreadyHaveAccountMessage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="16dp"
                 android:fontFamily="@font/poppins"
                 android:text="@string/not_registered"
                 app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/buttonShowRegistration"
+                app:layout_constraintHorizontal_bias="1.0"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/buttonLogin"
+                app:layout_constraintTop_toBottomOf="@+id/textViewLoginErrorMsg"
                 app:layout_constraintVertical_bias="0.0" />
 
             <Button
-                android:id="@+id/buttonShowRegister"
+                android:id="@+id/buttonShowRegistration"
                 style="@style/Widget.MaterialComponents.Button.TextButton"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="40dp"
                 android:fontFamily="@font/poppins"
                 android:text="@string/register"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1"
                 android:textStyle="bold"
-                app:layout_constraintBottom_toBottomOf="@+id/textViewSignUpMessage"
+                app:layout_constraintBottom_toBottomOf="@+id/textViewAlreadyHaveAccountMessage"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0.0"
-                app:layout_constraintStart_toEndOf="@+id/textViewSignUpMessage"
-                app:layout_constraintTop_toTopOf="@+id/textViewSignUpMessage" />
+                app:layout_constraintTop_toTopOf="@+id/textViewAlreadyHaveAccountMessage"
+                app:layout_constraintVertical_bias="0.576" />
+
+            <TextView
+                android:id="@+id/textViewLoginErrorMsg"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/buttonLogin" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </androidx.constraintlayout.widget.ConstraintLayout>
