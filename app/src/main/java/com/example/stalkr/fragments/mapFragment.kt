@@ -2,55 +2,68 @@ package com.example.stalkr
 
 import android.Manifest
 import android.app.Activity
+import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import androidx.core.content.ContextCompat.checkSelfPermission
 
-import com.google.android.gms.maps.CameraUpdateFactory
+import com.example.stalkr.databinding.FragmentMapBinding
+import com.google.android.gms.common.api.ResolvableApiException
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.SupportMapFragment
-import com.example.stalkr.databinding.ActivityMapsBinding
-import com.google.android.gms.common.api.ResolvableApiException
+
 import com.google.android.gms.location.*
 import com.google.android.gms.location.FusedLocationProviderClient
-import com.google.android.gms.location.LocationServices
+import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.android.gms.maps.MapView
 
-class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
+class mapFragment : Fragment(),
+    OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
     GoogleMap.OnCameraMoveStartedListener,
     GoogleMap.OnCameraMoveListener,
     GoogleMap.OnCameraMoveCanceledListener,
     GoogleMap.OnCameraIdleListener,
-    GoogleMap.OnMyLocationButtonClickListener {
+    GoogleMap.OnMyLocationButtonClickListener{
 
-    // DB
+    private var _binding: FragmentMapBinding? = null
+    private val binding get() = _binding!!
+
+    // AUTH + DB
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
+    // temp - for debug
+    private var userName: String = "bob"
+    private var uid: String = "qd1VVWwkWtM57spPALvAjUyaZG02"
 
-    // MAIN
+    // MAP
+    private var mapView: MapView? = null
     private lateinit var mMap: GoogleMap
-    private lateinit var binding: ActivityMapsBinding
 
     // LOCATION
     private lateinit var currentLocation: Location
     private lateinit var lastLocation: Location
     private var locationUpdateState = false
     private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private lateinit var locationCallback: LocationCallback
+    private lateinit var locationRequest: LocationRequest
     private var userLocationMarker: Marker? = null
     private var otherUserLocationMarker: Marker? = null
     private var otherUserLocationMarkers: List<Marker>? = null
-
-    // AUTH
-    private var userName: String = "Sally"
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
@@ -59,17 +72,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMapsBinding.inflate(layoutInflater)
+    }
 
-        setContentView(binding.root)
-
-        // Obtain the SupportMapFragment and get notified when the map is ready to be used.
-        val mapFragment = supportFragmentManager
-                .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(this)
-
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
-
+    private fun setupLocationCallback(){
+        Log.d(TAG,"setupLocationCallback")
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
@@ -83,51 +90,111 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 currentLocation = p0.lastLocation
                 saveLocationToDb(currentLocation)
                 placeMarkerOnMap(currentLocation)
-                retrieveLocationFromDB()
+                retrieveOtherUsersLocationFromDB()
             }
         }
-        createLocationRequest()
+    }
+
+    override fun onCreateView(
+        inflater: LayoutInflater, container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        // Inflate the layout for this fragment
+        _binding = FragmentMapBinding.inflate(inflater, container, false)
+
+        binding.btnMyLocation.setOnClickListener {
+            moveCamera(currentLocation)
+        }
+
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        mapView = _binding!!.mapView;
+        mapView!!.onCreate(savedInstanceState)
+
+        // First check for location permissions
+        if (checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED){
+            // if permissions not granted, request them
+            requestPermissions(
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION),
+                LOCATION_REQUEST_CODE)
+        } else{
+            setupLocationCallback()
+            mapView!!.getMapAsync(this);
+            createLocationRequest()
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        mMap.uiSettings.isZoomControlsEnabled = true
-        mMap.uiSettings.isMyLocationButtonEnabled = true
+        mMap.uiSettings.isZoomControlsEnabled = true // not working with mapview for some reason
         mMap.setOnMarkerClickListener(this)
+        mMap.setOnCameraIdleListener(this);
+        mMap.setOnCameraMoveStartedListener(this);
+        mMap.setOnCameraMoveListener(this);
+        mMap.setOnCameraMoveCanceledListener(this);
 
         setupMap()
     }
 
     private fun setupMap() {
-        if (ActivityCompat.checkSelfPermission(
-                this,
+        Log.d(TAG,"setupMap")
+        // If permissions are granted, set up map
+        if (checkSelfPermission(
+                requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this,
+            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+            ) == PackageManager.PERMISSION_GRANTED
         ) {
-            mMap.isMyLocationEnabled = true
-            mMap.setOnMyLocationButtonClickListener(this)
-            mMap.setOnCameraIdleListener(this);
-            mMap.setOnCameraMoveStartedListener(this);
-            mMap.setOnCameraMoveListener(this);
-            mMap.setOnCameraMoveCanceledListener(this);
-
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, android.Manifest.permission.ACCESS_COARSE_LOCATION), LOCATION_REQUEST_CODE)
-            return
+            mapView!!.onResume()
+            fusedLocationClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
+                if (location != null){
+                    placeMarkerOnMap(location)
+                    currentLocation = location
+                    moveCamera(currentLocation);
+                }
+            }
         }
+    }
 
-        fusedLocationClient.lastLocation.addOnSuccessListener(this) { location ->
-            if (location != null){
-                placeMarkerOnMap(location)
-                currentLocation = location
-                moveCamera(currentLocation);
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        Log.d(TAG, "onRequestPermissionsResult")
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            LOCATION_REQUEST_CODE -> {
+                if (grantResults.size > 0 && grantResults[0] === PackageManager.PERMISSION_GRANTED) {
+                    // permission was granted by the user
+                    setupLocationCallback()
+                    mapView!!.getMapAsync(this);
+                    createLocationRequest()
+                } else {
+                    // permission was denied by the user
+                    // TODO: decide what to do when permission was denied
+                    mapView!!.onStop()
+                }
+                return
             }
         }
     }
 
     private fun placeMarkerOnMap(location: Location) {
+        Log.d(TAG, "placeMarkerOnMap")
         val currentlatLng = LatLng(location.latitude, location.longitude)
 
         if (userLocationMarker == null) {
@@ -142,13 +209,6 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             //use the previously created marker
             userLocationMarker!!.position = currentlatLng
             //userLocationMarker!!.rotation = location.bearing
-        }
-
-        if (::lastLocation.isInitialized){
-            // if location has not actually changed, don't move camera
-            val lastlatLng = LatLng(lastLocation.latitude, lastLocation.longitude)
-            if (currentlatLng != lastlatLng)
-                moveCamera(location)
         }
     }
 
@@ -174,28 +234,29 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
-    private fun retrieveLocationFromDB() {
+    private fun retrieveOtherUsersLocationFromDB() {
         val userQuery = userCollectionRef
-            //.whereNotEqualTo("name", userName)
             .get()
-            userQuery.addOnSuccessListener {
-                for (document in it) {
-                    //Log.d("DB - user","retrieveLocationFromDB - ${document.get("name").toString()}")
+        userQuery.addOnSuccessListener {
+            for (document in it) {
+                val latitude = document.get("latitude").toString().toDouble()
+                val longitude = document.get("longitude").toString().toDouble()
+                val latLng = LatLng(latitude, longitude)
 
-                    val latitude = document.get("latitude").toString().toDouble()
-                    val longitude = document.get("longitude").toString().toDouble()
-                    val latLng = LatLng(latitude, longitude)
+                // TODO: retrieve static user model properties somewhere else ONCE
+                userName = document.get("name").toString()
 
-                    if (document.get("name").toString() != userName)
-                        placeOtherMarkerOnMap(latLng, document.get("name").toString())
-                }
+                if (document.get("uid").toString() != uid)
+                    placeOtherMarkerOnMap(latLng, document.get("name").toString())
             }
-            userQuery.addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents.", exception)
-            }
+        }
+        userQuery.addOnFailureListener { exception ->
+            Log.w(ContentValues.TAG, "Error getting documents.", exception)
+        }
     }
 
     private fun saveLocationToDb(location: Location) {
+        Log.d(TAG,"saveLocationToDb")
         val db = FirebaseFirestore.getInstance()
         val user = hashMapOf(
             "latitude" to location.latitude,
@@ -203,7 +264,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         )
 
         val userQuery = userCollectionRef
-            .whereEqualTo("name", userName)
+            .whereEqualTo("uid", uid)
             .get()
         userQuery.addOnSuccessListener {
             for(document in it) {
@@ -221,41 +282,26 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         saveLocationToDb(location)
     }
 
-    // 1
-    private lateinit var locationCallback: LocationCallback
-    // 2
-    private lateinit var locationRequest: LocationRequest
-
     private fun startLocationUpdates() {
-        //1
-        if (ActivityCompat.checkSelfPermission(this,
-                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this,
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                LOCATION_REQUEST_CODE)
-            return
+        Log.d(TAG, "startLocationUpdates")
+        if (checkSelfPermission(requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
         }
-        //2
-        fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
     }
 
     private fun createLocationRequest() {
-        // 1
         locationRequest = LocationRequest()
-        // 2
         locationRequest.interval = 5000
-        // 3
         locationRequest.fastestInterval = 1000
         locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
 
         val builder = LocationSettingsRequest.Builder()
             .addLocationRequest(locationRequest)
 
-        // 4
-        val client = LocationServices.getSettingsClient(this)
+        val client = LocationServices.getSettingsClient(requireActivity())
         val task = client.checkLocationSettings(builder.build())
 
-        // 5
         task.addOnSuccessListener {
             locationUpdateState = true
             startLocationUpdates()
@@ -268,7 +314,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
                 try {
                     // Show the dialog by calling startResolutionForResult(),
                     // and check the result in onActivityResult().
-                    e.startResolutionForResult(this@MapsActivity,
+                    e.startResolutionForResult(requireActivity(),
                         REQUEST_CHECK_SETTINGS)
                 } catch (sendEx: IntentSender.SendIntentException) {
                     // Ignore the error.
@@ -276,10 +322,11 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
             }
         }
     }
-    // 1
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.d(TAG, "MainActivity - onActivityResult")
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CHECK_SETTINGS) {
+        if (requestCode == mapFragment.REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
                 locationUpdateState = true
                 startLocationUpdates()
@@ -287,20 +334,23 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
         }
     }
 
-    // 2
     override fun onPause() {
         super.onPause()
-        fusedLocationClient.removeLocationUpdates(locationCallback)
+        if (::fusedLocationClient.isInitialized)
+            fusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
-    // 3
-    public override fun onResume() {
+    override fun onResume() {
         super.onResume()
         if (!locationUpdateState) {
-            startLocationUpdates()
+            if (checkSelfPermission(
+                    binding.root.context,
+                    Manifest.permission.ACCESS_FINE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED) {
+                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
+            }
         }
     }
-
 
     /* CAMERA STUFF */
 
@@ -309,7 +359,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
         val cameraPosition = CameraPosition.Builder()
             .target(LatLng(location.latitude, location.longitude))
-            .zoom(12f)            // Sets the zoom
+            .zoom(16f)            // Sets the zoom
             .build()                    // Creates a CameraPosition from the builder
 
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
@@ -317,26 +367,31 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMarker
 
     // when the camera starts moving.
     override fun onCameraMoveStarted(p0: Int) {
-        Log.d(TAG, "onCameraMoveStarted");
+        Log.d(ContentValues.TAG, "onCameraMoveStarted");
     }
 
     // while the camera is moving or the user is interacting with the touch screen.
     override fun onCameraMove() {
-        Log.d(TAG, "onCameraMove");
+        Log.d(ContentValues.TAG, "onCameraMove");
     }
 
     // when the current camera movement has been interrupted.
     override fun onCameraMoveCanceled() {
-        Log.d(TAG, "onCameraMoveCanceled");
+        Log.d(ContentValues.TAG, "onCameraMoveCanceled");
     }
 
     // when the camera stops moving and the user has stopped interacting with the map.
     override fun onCameraIdle() {
-        Log.d(TAG, "onCameraIdle");
+        Log.d(ContentValues.TAG, "onCameraIdle");
     }
 
     override fun onMyLocationButtonClick(): Boolean {
         //changeCamera(lastLocation)
         return true
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        _binding = null
     }
 }
