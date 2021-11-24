@@ -6,14 +6,17 @@
         <entry key="..\:/Users/Edward/AndroidStudioProjects/Stalkr/app/src/main/res/layout/activity_maps.xml" value="0.33469202898550726" />
         <entry key="..\:/Users/Edward/Documents/GitHub/andr2/Kotlin/Stalkr/app/src/main/res/layout/activity_maps.xml" value="0.3179347826086957" />
         <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/drawable/bg_rounded_corners.xml" value="0.362962962962963" />
+        <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/drawable/ic_baseline_person_24.xml" value="0.375" />
         <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/drawable/ic_wave.xml" value="0.37407407407407406" />
         <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/activity_auth.xml" value="0.3734375" />
         <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/fragment_home.xml" value="0.3734375" />
-        <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/fragment_login.xml" value="0.3113330438558402" />
-        <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/fragment_register.xml" value="0.3734375" />
+        <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/fragment_login.xml" value="0.4" />
+        <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/fragment_register.xml" value="0.4" />
         <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/notification.xml" value="0.1" />
         <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/view_auth_background.xml" value="0.2" />
         <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/layout/view_floating_sheet.xml" value="0.3734375" />
+        <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/menu/menu_bottomnav.xml" value="0.3734375" />
+        <entry key="..\:/t-jus/Documents/School_Development/andr2/app/src/main/res/menu/menu_map_actions.xml" value="0.3734375" />
       </map>
     </option>
   </component>
