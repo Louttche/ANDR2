@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE FrameLayout [
+    <!ENTITY bot_nav_height "60dp">
+    ]>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/fragmentContainerView_main"
+        android:name="com.example.stalkr.mapFragment"
+        android:layout_width="match_parent"
+        android:layout_height="500dp"
+        android:layout_gravity="fill_horizontal|top" />
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNavBar"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_gravity="center|bottom">
+
+    </com.google.android.material.bottomnavigation.BottomNavigationView>
+</FrameLayout>
