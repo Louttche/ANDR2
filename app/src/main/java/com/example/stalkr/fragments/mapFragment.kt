@@ -64,6 +64,8 @@ class mapFragment : Fragment(),
     private var userLocationMarker: Marker? = null
     private var otherUserLocationMarker: Marker? = null
     private var otherUserLocationMarkers: List<Marker>? = null
+    private var userPositionBounds : LatLngBounds = LatLngBounds(LatLng(0.0,0.0), LatLng(0.0,0.0))
+    private var changeBounds: Boolean = true
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
@@ -72,27 +74,6 @@ class mapFragment : Fragment(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-    }
-
-    private fun setupLocationCallback(){
-        Log.d(TAG,"setupLocationCallback")
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(p0: LocationResult) {
-                super.onLocationResult(p0)
-                Log.d(TAG,"onLocationResult")
-
-                if (::currentLocation.isInitialized)
-                    lastLocation = currentLocation
-                else
-                    lastLocation = p0.lastLocation
-
-                currentLocation = p0.lastLocation
-                saveLocationToDb(currentLocation)
-                placeMarkerOnMap(currentLocation)
-                retrieveOtherUsersLocationFromDB()
-            }
-        }
     }
 
     override fun onCreateView(
@@ -133,6 +114,54 @@ class mapFragment : Fragment(),
             mapView!!.getMapAsync(this);
             createLocationRequest()
         }
+    }
+
+    private fun setupLocationCallback(){
+        Log.d(TAG,"setupLocationCallback")
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(p0: LocationResult) {
+                super.onLocationResult(p0)
+                Log.d(TAG,"onLocationResult")
+
+                if (::currentLocation.isInitialized){
+                    lastLocation = currentLocation
+                }
+                else
+                    lastLocation = p0.lastLocation
+
+                currentLocation = p0.lastLocation
+                setupLocationViewport()
+                saveLocationToDb(currentLocation)
+                placeMarkerOnMap(currentLocation)
+                retrieveOtherUsersLocationFromDB()
+            }
+        }
+    }
+
+    fun setupLocationViewport(){
+
+        if (changeBounds){
+            // if marker goes beyond the view bounds, center the camera on user
+            var meters_offset : Double = 30.0
+            var latOffset : Double = metersToLat(meters_offset) // y
+            var longOffset : Double = metersToLong(meters_offset, currentLocation.latitude) // x
+
+            userPositionBounds = LatLngBounds(
+                LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
+                LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
+            )
+            changeBounds = false
+        }
+
+        val currentlatLng = LatLng(currentLocation.latitude, currentLocation.longitude)
+        if (!userPositionBounds.contains(currentlatLng)){
+            changeBounds = true
+            //Log.d("viewport","user is out of viewport bounds - change: $changeBounds")
+            moveCamera(currentLocation)
+        }
+        else
+            Log.d("viewport","user is inside bounds - change: $changeBounds")
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -388,6 +417,16 @@ class mapFragment : Fragment(),
     override fun onMyLocationButtonClick(): Boolean {
         //changeCamera(lastLocation)
         return true
+    }
+
+    private fun metersToLat(meters: Double) : Double {
+        // assume 111,111 meters is 1 degree of latitude in y direction
+        return meters/111111
+    }
+
+    private fun metersToLong(meters: Double, lat: Double) : Double {
+        // assume 111,111 * cos(latitude) meters is 1 degree of longitude in the x direction
+        return meters/111111 * kotlin.math.cos(lat)
     }
 
     override fun onDestroyView() {
