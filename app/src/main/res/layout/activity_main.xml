@@ -11,7 +11,7 @@
 
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/fragmentContainerView_main"
-        android:name="com.example.stalkr.mapFragment"
+        android:name="com.example.stalkr.MapFragment"
         android:layout_width="match_parent"
         android:layout_height="500dp"
         android:layout_gravity="fill_horizontal|top" />

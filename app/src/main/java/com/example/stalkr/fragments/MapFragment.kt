@@ -33,7 +33,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.android.gms.maps.MapView
 
-class mapFragment : Fragment(),
+class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
     GoogleMap.OnCameraMoveStartedListener,
     GoogleMap.OnCameraMoveListener,
@@ -356,7 +356,7 @@ class mapFragment : Fragment(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "MainActivity - onActivityResult")
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == mapFragment.REQUEST_CHECK_SETTINGS) {
+        if (requestCode == MapFragment.REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
                 locationUpdateState = true
                 startLocationUpdates()

@@ -5,6 +5,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.FragmentTransaction
+import com.example.stalkr.MainActivity
 import com.example.stalkr.R
 import com.example.stalkr.fragments.LoginFragment
 import com.example.stalkr.fragments.RegistrationFragment
@@ -50,7 +51,7 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
     }
 
     override fun onAuthenticationComplete() {
-        val intent = Intent(this, MapsActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
     }
