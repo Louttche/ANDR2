@@ -24,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
 
     // AUTH
+    var db: FirebaseFirestore? = FirebaseFirestore.getInstance()
     //private var userName: String = "Sally"
 
     override fun onCreate(savedInstanceState: Bundle?) {

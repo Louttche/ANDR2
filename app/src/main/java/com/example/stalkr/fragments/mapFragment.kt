@@ -47,7 +47,7 @@ class mapFragment : Fragment(),
     // AUTH + DB
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
     // temp - for debug
-    private var userName: String = "bob"
+    private var userName: String = ""
     private var uid: String = "qd1VVWwkWtM57spPALvAjUyaZG02"
 
     // MAP
@@ -232,7 +232,8 @@ class mapFragment : Fragment(),
             markerOptions.position(currentlatLng)
             //markerOptions.rotation(location.bearing)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            markerOptions.title(userName)
+            if (userName.isNotEmpty())
+                markerOptions.title(userName)
             userLocationMarker = mMap.addMarker(markerOptions)
         } else {
             //use the previously created marker
@@ -243,10 +244,10 @@ class mapFragment : Fragment(),
 
     // TODO: change string to USER data type in 'user' param
     private fun placeOtherMarkerOnMap(latLng: LatLng, user: String) {
-
         if (otherUserLocationMarkers != null){
             // if the user already has a marker, just update position
             if (otherUserLocationMarkers!!.any{it.title == user}){
+                // TODO: old user marker stays where it is
                 otherUserLocationMarkers!!.find{it.title == user}!!.position = latLng
             } else {
                 val markerOptions = MarkerOptions()
