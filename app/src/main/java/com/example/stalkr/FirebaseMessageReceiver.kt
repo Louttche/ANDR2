@@ -69,7 +69,7 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
         message: String
     ) {
         // Pass the intent to switch to the MainActivity
-        val intent = Intent(this, MapsActivity::class.java)
+        val intent = Intent(this, MainActivity::class.java)
         // Assign channel ID
         val channel_id = "notification_channel"
         // Here FLAG_ACTIVITY_CLEAR_TOP flag is set to clear
