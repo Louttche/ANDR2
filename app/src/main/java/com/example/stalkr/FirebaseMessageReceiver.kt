@@ -17,18 +17,6 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
     }
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
-        // First case when notifications are received via
-        // data event
-        // Here, 'title' and 'message' are the assumed names of JSON
-        // attributes. Since here we do not have any data
-        // payload, This section is commented out. It is
-        // here only for reference purposes.
-        /*if(remoteMessage.getData().size()>0){
-            showNotification(remoteMessage.getData().get("title"),
-                          remoteMessage.getData().get("message"));
-        }*/
-
-        // Second case when notification payload is received.
         if (remoteMessage.getNotification() != null) {
             val title = remoteMessage.getNotification()!!.getTitle().toString()
             val body = remoteMessage.getNotification()!!.getBody().toString()
