@@ -2,10 +2,8 @@ package com.example.stalkr
 
 import android.Manifest
 import android.app.Activity
-import android.app.Notification
 import android.content.ContentValues
 import android.content.ContentValues.TAG
-import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
@@ -37,6 +35,8 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
 import com.google.android.gms.maps.MapView
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
@@ -53,7 +53,7 @@ class MapFragment : Fragment(),
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
     // temp - for debug
     private var userName: String = ""
-    private var uid: String = "qd1VVWwkWtM57spPALvAjUyaZG02"
+    private var uid: String = Firebase.auth.currentUser!!.uid
 
     // MAP
     private var mapView: MapView? = null
@@ -292,6 +292,7 @@ class MapFragment : Fragment(),
         val userQuery = userCollectionRef
             .whereNotEqualTo("uid", uid)
             .get()
+
         userQuery.addOnSuccessListener {
             for (document in it) {
                 val latitude = document.get("latitude").toString().toDouble()
@@ -306,6 +307,10 @@ class MapFragment : Fragment(),
                 placeOtherMarkerOnMap(latLng, document.get("name").toString())
 
                 // Check if other user in 10 meters range
+
+                // ! Now we get 2 notifications because the `startLocationUpdate()` is called 2 times.
+                // TODO Call `startLocationUpdate()` once.
+
                 val metersOffset = 10.0
                 val latOffset: Double = metersToLat(metersOffset)
                 val longOffset: Double = metersToLong(metersOffset, currentLocation.latitude)
@@ -360,6 +365,7 @@ class MapFragment : Fragment(),
 
     private fun startLocationUpdates() {
         Log.d(TAG, "startLocationUpdates")
+
         if (checkSelfPermission(requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
