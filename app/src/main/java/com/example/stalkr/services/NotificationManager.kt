@@ -12,6 +12,13 @@ import androidx.core.app.NotificationManagerCompat
 import com.example.stalkr.MainActivity
 import com.example.stalkr.R
 
+/**
+ * A notification manager
+ *
+ * This class enables creating and showing a notification on the screen.
+ *
+ * @param context Mainly pass "this" if in an Activity. Pass "requireContext()" if in Fragment.
+ */
 class NotificationManager(private val context: Context) {
     companion object {
         var notificationId = 0
@@ -34,6 +41,10 @@ class NotificationManager(private val context: Context) {
         return remoteViews
     }
 
+    /**
+     * Creates and shows a notification using  to this group.
+     * @return the new size of the group.
+     */
     fun show(title: String, message: String) {
         // Pass the intent to switch to the MainActivity
         val intent = Intent(context, MainActivity::class.java)
