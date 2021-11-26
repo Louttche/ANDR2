@@ -13,12 +13,8 @@ import androidx.core.app.NotificationCompat
 
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-import javax.inject.Inject
 import android.media.RingtoneManager
 import android.net.Uri
-
-
-class FirebaseMessage @Inject constructor(var title: String, var body: String, var receiverToken: String) {}
 
 
 class FirebaseMessageReceiver : FirebaseMessagingService() {
@@ -68,7 +64,7 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
     }
 
     // Method to display the notifications
-    private fun showNotification(
+    public fun showNotification(
         title: String,
         message: String
     ) {
@@ -99,7 +95,6 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
             .setAutoCancel(true)
             .setVibrate(
                 longArrayOf(
-                    1000, 1000, 1000,
                     1000, 1000
                 )
             )
@@ -142,7 +137,4 @@ class FirebaseMessageReceiver : FirebaseMessagingService() {
         }
         notificationManager!!.notify(0, builder.build())
     }
-
-    // @TODO Implement this function
-    fun sendMessage(message: FirebaseMessage) {}
 }
