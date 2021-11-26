@@ -314,8 +314,6 @@ class MapFragment : Fragment(),
                     LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
                 )
 
-                Log.d("USERNAME", userName);
-
                 val otherInBounds = othersAroundBounds.contains(latLng)
                 val otherAlreadyInBounds = othersInBoundsList.contains(otherUserUID)
 
