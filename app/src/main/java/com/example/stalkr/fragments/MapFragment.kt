@@ -2,8 +2,10 @@ package com.example.stalkr
 
 import android.Manifest
 import android.app.Activity
+import android.app.Notification
 import android.content.ContentValues
 import android.content.ContentValues.TAG
+import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageManager
@@ -18,6 +20,7 @@ import android.view.ViewGroup
 import androidx.core.content.ContextCompat.checkSelfPermission
 
 import com.example.stalkr.databinding.FragmentMapBinding
+import com.example.stalkr.services.NotificationManager
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
@@ -70,6 +73,7 @@ class MapFragment : Fragment(),
     private var changeBounds: Boolean = true
 
     private val othersInBoundsList: ArrayList<String> = arrayListOf()
+    private lateinit var notificationManager: NotificationManager;
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
@@ -99,6 +103,8 @@ class MapFragment : Fragment(),
 
         mapView = _binding!!.mapView;
         mapView!!.onCreate(savedInstanceState)
+
+        notificationManager = NotificationManager(requireContext())
 
         // First check for location permissions
         if (checkSelfPermission(
@@ -284,6 +290,7 @@ class MapFragment : Fragment(),
 
     private fun retrieveOtherUsersLocationFromDB() {
         val userQuery = userCollectionRef
+            .whereNotEqualTo("uid", uid)
             .get()
         userQuery.addOnSuccessListener {
             for (document in it) {
@@ -296,25 +303,29 @@ class MapFragment : Fragment(),
 
                 val otherUserUID = document.get("uid").toString()
 
-                if (otherUserUID != uid)
-                    placeOtherMarkerOnMap(latLng, document.get("name").toString())
-
+                placeOtherMarkerOnMap(latLng, document.get("name").toString())
 
                 // Check if other user in 10 meters range
                 val metersOffset = 10.0
-                val latOffset : Double = metersToLat(metersOffset) // y
-                val longOffset : Double = metersToLong(metersOffset, currentLocation.latitude) // x
-                val othersAroundBounds : LatLngBounds = LatLngBounds(
+                val latOffset: Double = metersToLat(metersOffset)
+                val longOffset: Double = metersToLong(metersOffset, currentLocation.latitude)
+                val othersAroundBounds = LatLngBounds(
                     LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
                     LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
                 )
-                if (othersAroundBounds.contains(latLng)) {
-                    if (!othersInBoundsList.contains(otherUserUID)) {
-                        othersInBoundsList.add(otherUserUID)
-                        Log.d("userClose", "$userName is close")
-                        // TODO Create and show a notification
-                    }
+
+                Log.d("USERNAME", userName);
+
+                val otherInBounds = othersAroundBounds.contains(latLng)
+                val otherAlreadyInBounds = othersInBoundsList.contains(otherUserUID)
+
+                if (otherInBounds && !otherAlreadyInBounds) {
+                    othersInBoundsList.add(otherUserUID)
+                    notificationManager.show("You are being stalked", "$userName is stalking you!")
+                } else if (!otherInBounds && otherAlreadyInBounds) {
+                    othersInBoundsList.remove(otherUserUID)
                 }
+
             }
         }
         userQuery.addOnFailureListener { exception ->
