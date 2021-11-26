@@ -69,6 +69,8 @@ class MapFragment : Fragment(),
     private var userPositionBounds : LatLngBounds = LatLngBounds(LatLng(0.0,0.0), LatLng(0.0,0.0))
     private var changeBounds: Boolean = true
 
+    private val othersInBoundsList: ArrayList<String> = arrayListOf()
+
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
@@ -292,8 +294,27 @@ class MapFragment : Fragment(),
                 // TODO: retrieve static user model properties somewhere else ONCE
                 userName = document.get("name").toString()
 
-                if (document.get("uid").toString() != uid)
+                val otherUserUID = document.get("uid").toString()
+
+                if (otherUserUID != uid)
                     placeOtherMarkerOnMap(latLng, document.get("name").toString())
+
+
+                // Check if other user in 10 meters range
+                val metersOffset = 10.0
+                val latOffset : Double = metersToLat(metersOffset) // y
+                val longOffset : Double = metersToLong(metersOffset, currentLocation.latitude) // x
+                val othersAroundBounds : LatLngBounds = LatLngBounds(
+                    LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
+                    LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
+                )
+                if (othersAroundBounds.contains(latLng)) {
+                    if (!othersInBoundsList.contains(otherUserUID)) {
+                        othersInBoundsList.add(otherUserUID)
+                        Log.d("userClose", "$userName is close")
+                        // TODO Create and show a notification
+                    }
+                }
             }
         }
         userQuery.addOnFailureListener { exception ->
