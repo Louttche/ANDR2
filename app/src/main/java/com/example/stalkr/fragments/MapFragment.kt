@@ -47,8 +47,6 @@ class MapFragment : Fragment(),
     // AUTH + DB
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
     // temp - for debug
-    private var userName: String = ""
-    private var uid: String = "qd1VVWwkWtM57spPALvAjUyaZG02"
 
     // MAP
     private var mapView: MapView? = null
@@ -232,8 +230,7 @@ class MapFragment : Fragment(),
             markerOptions.position(currentlatLng)
             //markerOptions.rotation(location.bearing)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            if (userName.isNotEmpty())
-                markerOptions.title(userName)
+            markerOptions.title(MainActivity.userName)
             userLocationMarker = mMap.addMarker(markerOptions)
         } else {
             //use the previously created marker
@@ -266,6 +263,7 @@ class MapFragment : Fragment(),
 
     private fun retrieveOtherUsersLocationFromDB() {
         val userQuery = userCollectionRef
+            .whereNotEqualTo("uid", MainActivity.currentUser!!.uid)
             .get()
         userQuery.addOnSuccessListener {
             for (document in it) {
@@ -273,11 +271,8 @@ class MapFragment : Fragment(),
                 val longitude = document.get("longitude").toString().toDouble()
                 val latLng = LatLng(latitude, longitude)
 
-                // TODO: retrieve static user model properties somewhere else ONCE
-                userName = document.get("name").toString()
-
-                if (document.get("uid").toString() != uid)
-                    placeOtherMarkerOnMap(latLng, document.get("name").toString())
+                val otherUserUID = document.get("uid").toString()
+                placeOtherMarkerOnMap(latLng, document.get("name").toString())
             }
         }
         userQuery.addOnFailureListener { exception ->
@@ -294,7 +289,7 @@ class MapFragment : Fragment(),
         )
 
         val userQuery = userCollectionRef
-            .whereEqualTo("uid", uid)
+            .whereEqualTo("uid", MainActivity.currentUser!!.uid)
             .get()
         userQuery.addOnSuccessListener {
             for(document in it) {

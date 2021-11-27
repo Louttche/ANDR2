@@ -25,8 +25,10 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
         if(currentUser != null){
             onAuthenticationComplete()
         }
+
         super.onStart()
     }
+    
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_auth)
