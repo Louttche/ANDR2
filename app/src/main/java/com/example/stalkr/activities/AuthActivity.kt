@@ -47,7 +47,7 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
         fragmentTransaction.commit()
     }
 
-    private fun setUsername() {
+    private fun setUserData() {
         val firebaseAuth = Firebase.auth
         FirebaseFirestore.getInstance().collection("users")
             .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
@@ -73,7 +73,7 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
     }
 
     override fun onAuthenticationComplete() {
-        setUsername()
+        setUserData()
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()

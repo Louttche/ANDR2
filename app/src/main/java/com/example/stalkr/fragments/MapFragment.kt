@@ -139,7 +139,6 @@ class MapFragment : Fragment(),
     }
 
     fun setupLocationViewport(){
-
         if (changeBounds){
             // if marker goes beyond the view bounds, center the camera on user
             var meters_offset : Double = 30.0
@@ -156,11 +155,8 @@ class MapFragment : Fragment(),
         val currentlatLng = LatLng(currentLocation.latitude, currentLocation.longitude)
         if (!userPositionBounds.contains(currentlatLng)){
             changeBounds = true
-            //Log.d("viewport","user is out of viewport bounds - change: $changeBounds")
             moveCamera(currentLocation)
         }
-        else
-            Log.d("viewport","user is inside bounds - change: $changeBounds")
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
