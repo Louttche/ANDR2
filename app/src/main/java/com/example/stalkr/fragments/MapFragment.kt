@@ -16,6 +16,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat.checkSelfPermission
+import com.example.stalkr.activities.AuthActivity
 
 import com.example.stalkr.databinding.FragmentMapBinding
 import com.google.android.gms.common.api.ResolvableApiException
@@ -230,7 +231,7 @@ class MapFragment : Fragment(),
             markerOptions.position(currentlatLng)
             //markerOptions.rotation(location.bearing)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            markerOptions.title(MainActivity.userName)
+            markerOptions.title(AuthActivity.userName)
             userLocationMarker = mMap.addMarker(markerOptions)
         } else {
             //use the previously created marker
@@ -263,7 +264,7 @@ class MapFragment : Fragment(),
 
     private fun retrieveOtherUsersLocationFromDB() {
         val userQuery = userCollectionRef
-            .whereNotEqualTo("uid", MainActivity.currentUser!!.uid)
+            .whereNotEqualTo("uid", AuthActivity.currentUser!!.uid)
             .get()
         userQuery.addOnSuccessListener {
             for (document in it) {
@@ -289,7 +290,7 @@ class MapFragment : Fragment(),
         )
 
         val userQuery = userCollectionRef
-            .whereEqualTo("uid", MainActivity.currentUser!!.uid)
+            .whereEqualTo("uid", AuthActivity.currentUser!!.uid)
             .get()
         userQuery.addOnSuccessListener {
             for(document in it) {

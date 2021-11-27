@@ -27,18 +27,12 @@ class MainActivity : AppCompatActivity() {
     // AUTH
     var db: FirebaseFirestore? = FirebaseFirestore.getInstance()
 
-    companion object UserData {
-        val currentUser = Firebase.auth.currentUser
-        var userName : String = ""
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        setUsername()
         // when app is initially opened the Map Fragment should be visible
         changeFragment(MapFragment())
     }
@@ -66,19 +60,6 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this, AuthActivity::class.java)
         startActivity(intent)
         finish()
-    }
-
-    private fun setUsername() {
-        val firebaseAuth = Firebase.auth
-        FirebaseFirestore.getInstance().collection("users")
-            .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
-            .get()
-            .addOnSuccessListener { documents ->
-                userName = documents.first().data["name"].toString()
-            }
-            .addOnFailureListener { exception ->
-                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
-            }
     }
 
     // function to change the fragment which is used to reduce the lines of code

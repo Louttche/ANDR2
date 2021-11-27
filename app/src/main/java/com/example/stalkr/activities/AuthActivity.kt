@@ -1,8 +1,10 @@
 package com.example.stalkr.activities
 
+import android.content.ContentValues
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.FragmentTransaction
 import com.example.stalkr.MainActivity
@@ -18,6 +20,11 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
     private lateinit var fragmentTransaction: FragmentTransaction
     private val loginFragment = LoginFragment()
     private val registrationFragment = RegistrationFragment()
+
+    companion object UserData {
+        val currentUser = Firebase.auth.currentUser
+        var userName : String = ""
+    }
 
     override fun onStart() {
         // Check if user is signed in (non-null) and update UI accordingly.
@@ -40,6 +47,19 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
         fragmentTransaction.commit()
     }
 
+    private fun setUsername() {
+        val firebaseAuth = Firebase.auth
+        FirebaseFirestore.getInstance().collection("users")
+            .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
+            .get()
+            .addOnSuccessListener { documents ->
+                userName = documents.first().data["name"].toString()
+            }
+            .addOnFailureListener { exception ->
+                Log.w(ContentValues.TAG, "Error getting documents: ", exception)
+            }
+    }
+
     override fun onButtonClickShowRegistration() {
         fragmentTransaction = supportFragmentManager.beginTransaction()
         fragmentTransaction.replace(R.id.fragmentContainerViewAuth, registrationFragment, "RegistrationFragment")
@@ -53,6 +73,7 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
     }
 
     override fun onAuthenticationComplete() {
+        setUsername()
         val intent = Intent(this, MainActivity::class.java)
         startActivity(intent)
         finish()
