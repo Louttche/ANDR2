@@ -15,15 +15,20 @@ import com.example.stalkr.interfaces.AuthFragmentCallback
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import com.example.stalkr.data.UserData
+import com.google.firebase.firestore.SetOptions
 
 class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
     private lateinit var fragmentTransaction: FragmentTransaction
     private val loginFragment = LoginFragment()
     private val registrationFragment = RegistrationFragment()
 
-    companion object UserData {
-        val currentUser = Firebase.auth.currentUser
-        var userName : String = ""
+    companion object AuthData {
+        val db = FirebaseFirestore.getInstance()
+        val userCollectionRef = db.collection("users")
+        val groupCollectionRef = db.collection("groups")
+        val userDbData = Firebase.auth.currentUser
+        var userData = UserData("", "")
     }
 
     override fun onStart() {
@@ -53,7 +58,12 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
             .whereEqualTo("uid", firebaseAuth.currentUser?.uid)
             .get()
             .addOnSuccessListener { documents ->
-                userName = documents.first().data["name"].toString()
+                // Set this user as active in DB
+                val userActive = hashMapOf("isActive" to true)
+                userCollectionRef.document(documents.first().id).set(userActive, SetOptions.merge())
+
+                // Update the currentUser model
+                userData.updateUserFromDB(firebaseAuth.currentUser!!.uid)
             }
             .addOnFailureListener { exception ->
                 Log.w(ContentValues.TAG, "Error getting documents: ", exception)

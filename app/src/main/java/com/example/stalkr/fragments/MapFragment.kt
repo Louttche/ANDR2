@@ -17,6 +17,8 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.example.stalkr.activities.AuthActivity
+import com.example.stalkr.data.InfoWindowData
+import com.example.stalkr.data.UserData
 
 import com.example.stalkr.databinding.FragmentMapBinding
 import com.google.android.gms.common.api.ResolvableApiException
@@ -30,7 +32,6 @@ import com.google.android.gms.location.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.android.gms.maps.MapView
 
@@ -39,15 +40,10 @@ class MapFragment : Fragment(),
     GoogleMap.OnCameraMoveStartedListener,
     GoogleMap.OnCameraMoveListener,
     GoogleMap.OnCameraMoveCanceledListener,
-    GoogleMap.OnCameraIdleListener,
-    GoogleMap.OnMyLocationButtonClickListener{
+    GoogleMap.OnCameraIdleListener {
 
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
-
-    // AUTH + DB
-    private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
-    // temp - for debug
 
     // MAP
     private var mapView: MapView? = null
@@ -62,7 +58,7 @@ class MapFragment : Fragment(),
     private lateinit var locationRequest: LocationRequest
     private var userLocationMarker: Marker? = null
     private var otherUserLocationMarker: Marker? = null
-    private var otherUserLocationMarkers: List<Marker>? = null
+    private var otherUserLocationMarkers: Map<UserData, Marker>? = null
     private var userPositionBounds : LatLngBounds = LatLngBounds(LatLng(0.0,0.0), LatLng(0.0,0.0))
     private var changeBounds: Boolean = true
 
@@ -163,10 +159,13 @@ class MapFragment : Fragment(),
         mMap = googleMap
         mMap.uiSettings.isZoomControlsEnabled = true // not working with mapview for some reason
         mMap.setOnMarkerClickListener(this)
-        mMap.setOnCameraIdleListener(this);
-        mMap.setOnCameraMoveStartedListener(this);
-        mMap.setOnCameraMoveListener(this);
-        mMap.setOnCameraMoveCanceledListener(this);
+        mMap.setOnCameraIdleListener(this)
+        mMap.setOnCameraMoveStartedListener(this)
+        mMap.setOnCameraMoveListener(this)
+        mMap.setOnCameraMoveCanceledListener(this)
+
+        val customInfoWindow = CustomInfoWindowForGoogleMap(requireContext())
+        mMap!!.setInfoWindowAdapter(customInfoWindow)
 
         setupMap()
     }
@@ -227,8 +226,11 @@ class MapFragment : Fragment(),
             markerOptions.position(currentlatLng)
             //markerOptions.rotation(location.bearing)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            markerOptions.title(AuthActivity.userName)
+            markerOptions.title(AuthActivity.userData.name)
             userLocationMarker = mMap.addMarker(markerOptions)
+
+            //val info = InfoWindowData(AuthActivity.userData.name)
+            //userLocationMarker!!.tag = info
         } else {
             //use the previously created marker
             userLocationMarker!!.position = currentlatLng
@@ -237,30 +239,30 @@ class MapFragment : Fragment(),
     }
 
     // TODO: change string to USER data type in 'user' param
-    private fun placeOtherMarkerOnMap(latLng: LatLng, user: String) {
+    private fun placeOtherMarkerOnMap(latLng: LatLng, user: UserData) {
         if (otherUserLocationMarkers != null){
             // if the user already has a marker, just update position
-            if (otherUserLocationMarkers!!.any{it.title == user}){
+            if (otherUserLocationMarkers!!.any{it.key == user}){
                 // TODO: old user marker stays where it is
-                otherUserLocationMarkers!!.find{it.title == user}!!.position = latLng
+                otherUserLocationMarkers!![user]!!.position = latLng
             } else {
                 val markerOptions = MarkerOptions()
                 markerOptions.position(latLng)
                 markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
                 markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                markerOptions.title(user)
+                markerOptions.title(user.name)
 
                 otherUserLocationMarker = mMap.addMarker(markerOptions)
-                otherUserLocationMarkers!!.toMutableList().add(otherUserLocationMarker!!)
+                otherUserLocationMarkers!!.toMutableMap().putIfAbsent(user, otherUserLocationMarker!!)
             }
         } else{
-            otherUserLocationMarkers = emptyList()
+            otherUserLocationMarkers = mutableMapOf()
         }
     }
 
     private fun retrieveOtherUsersLocationFromDB() {
-        val userQuery = userCollectionRef
-            .whereNotEqualTo("uid", AuthActivity.currentUser!!.uid)
+        val userQuery = AuthActivity.userCollectionRef
+            .whereNotEqualTo("uid", AuthActivity.userDbData!!.uid)
             .get()
         userQuery.addOnSuccessListener {
             for (document in it) {
@@ -268,8 +270,8 @@ class MapFragment : Fragment(),
                 val longitude = document.get("longitude").toString().toDouble()
                 val latLng = LatLng(latitude, longitude)
 
-                val otherUserUID = document.get("uid").toString()
-                placeOtherMarkerOnMap(latLng, document.get("name").toString())
+                val otherUser = UserData(document.get("uid").toString(), document.get("name").toString())
+                placeOtherMarkerOnMap(latLng, otherUser)
             }
         }
         userQuery.addOnFailureListener { exception ->
@@ -279,18 +281,18 @@ class MapFragment : Fragment(),
 
     private fun saveLocationToDb(location: Location) {
         Log.d(TAG,"saveLocationToDb")
-        val db = FirebaseFirestore.getInstance()
-        val user = hashMapOf(
+        //val db = FirebaseFirestore.getInstance()
+        val userLocation = hashMapOf(
             "latitude" to location.latitude,
             "longitude" to location.longitude
         )
 
-        val userQuery = userCollectionRef
-            .whereEqualTo("uid", AuthActivity.currentUser!!.uid)
+        val userQuery = AuthActivity.userCollectionRef
+            .whereEqualTo("uid", AuthActivity.userDbData!!.uid)
             .get()
         userQuery.addOnSuccessListener {
             for(document in it) {
-                db.collection("users").document(document.id).set(user, SetOptions.merge())
+                AuthActivity.userCollectionRef.document(document.id).set(userLocation, SetOptions.merge())
             }
         }
     }
@@ -348,7 +350,7 @@ class MapFragment : Fragment(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "MainActivity - onActivityResult")
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == MapFragment.REQUEST_CHECK_SETTINGS) {
+        if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
                 locationUpdateState = true
                 startLocationUpdates()
@@ -405,11 +407,6 @@ class MapFragment : Fragment(),
     // when the camera stops moving and the user has stopped interacting with the map.
     override fun onCameraIdle() {
         Log.d(ContentValues.TAG, "onCameraIdle");
-    }
-
-    override fun onMyLocationButtonClick(): Boolean {
-        //changeCamera(lastLocation)
-        return true
     }
 
     private fun metersToLat(meters: Double) : Double {

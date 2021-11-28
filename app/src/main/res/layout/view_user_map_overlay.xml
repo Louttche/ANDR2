@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <FrameLayout
+        android:layout_width="200dp"
+        android:layout_height="120dp">
+
+        <ImageView
+            android:id="@+id/iv_user_photo"
+            android:layout_width="45dp"
+            android:layout_height="45dp"
+            android:layout_gravity="left|top"
+            android:layout_marginStart="10dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="5dp"
+            tools:srcCompat="@tools:sample/avatars" />
+
+        <TextView
+            android:id="@+id/tv_user_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="start"
+            android:layout_marginTop="18dp"
+            android:layout_marginLeft="60dp"
+            android:text="TextView"
+            android:textAlignment="textStart"
+            android:textSize="18dp"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/btn_invite_group"
+            android:layout_width="78dp"
+            android:layout_height="48dp"
+            android:layout_marginEnd="16dp"
+            android:layout_gravity="right|bottom"
+            android:text="Invite"
+            android:textSize="12dp" />
+
+        <Button
+            android:id="@+id/btn_view_profile"
+            android:layout_width="78dp"
+            android:layout_height="48dp"
+            android:layout_marginStart="16dp"
+            android:layout_gravity="left|bottom"
+            android:text="View"
+            android:textSize="12dp" />
+    </FrameLayout>
+
+</LinearLayout>

@@ -16,16 +16,14 @@ import androidx.fragment.app.Fragment
 import com.example.stalkr.activities.AuthActivity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.ktx.Firebase
+import com.google.rpc.context.AttributeContext
 import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
-    // MAIN
     private lateinit var binding: ActivityMainBinding
-
-    // AUTH
-    var db: FirebaseFirestore? = FirebaseFirestore.getInstance()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,6 +55,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signOut() {
+        // Set auth user as 'inactive' in DB
+        AuthActivity.userData.isActive = false
+        AuthActivity.userCollectionRef.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
+            .get()
+            .addOnSuccessListener { documents ->
+                val userActive = hashMapOf("isActive" to false)
+                AuthActivity.userCollectionRef.document(documents.first().id).set(userActive, SetOptions.merge())
+            }
+
         val intent = Intent(this, AuthActivity::class.java)
         startActivity(intent)
         finish()
