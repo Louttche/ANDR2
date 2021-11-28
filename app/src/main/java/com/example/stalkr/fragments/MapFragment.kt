@@ -263,15 +263,18 @@ class MapFragment : Fragment(),
     private fun retrieveOtherUsersLocationFromDB() {
         val userQuery = AuthActivity.userCollectionRef
             .whereNotEqualTo("uid", AuthActivity.userDbData!!.uid)
+            //.whereEqualTo("isActive", true) // not working for some reason
             .get()
         userQuery.addOnSuccessListener {
             for (document in it) {
-                val latitude = document.get("latitude").toString().toDouble()
-                val longitude = document.get("longitude").toString().toDouble()
-                val latLng = LatLng(latitude, longitude)
+                if (document.get("isActive").toString().toBoolean()){
+                    val latitude = document.get("latitude").toString().toDouble()
+                    val longitude = document.get("longitude").toString().toDouble()
+                    val latLng = LatLng(latitude, longitude)
 
-                val otherUser = UserData(document.get("uid").toString(), document.get("name").toString())
-                placeOtherMarkerOnMap(latLng, otherUser)
+                    val otherUser = UserData(document.get("uid").toString(), document.get("name").toString())
+                    placeOtherMarkerOnMap(latLng, otherUser)
+                }
             }
         }
         userQuery.addOnFailureListener { exception ->
