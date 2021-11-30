@@ -3,6 +3,7 @@ import android.location.Location
 import com.example.stalkr.activities.AuthActivity
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.SetOptions
+import com.google.rpc.context.AttributeContext
 
 // Common data for all users // TODO: make it into Profile?
 @IgnoreExtraProperties
@@ -14,12 +15,13 @@ data class UserProfileData (var uid: String, var name: String) {
 
     // Methods
     fun updateUserProfileFromDB(id: String){
+        val users = AuthActivity.db.collection("users")
         this.uid = id
-        AuthActivity.userCollectionRef.whereEqualTo("uid", this.uid)
+        users.whereEqualTo("uid", this.uid)
             .get()
-            .addOnSuccessListener { users ->
-                this.name = users.first().data["name"].toString()
-                this.isActive = users.first().data["isActive"].toString().toBoolean()
+            .addOnSuccessListener { usersDocuments ->
+                this.name = usersDocuments.first().data["name"].toString()
+                this.isActive = usersDocuments.first().data["isActive"].toString().toBoolean()
 
                 /*
                 // update groups
@@ -40,11 +42,12 @@ data class UserProfileData (var uid: String, var name: String) {
             "longitude" to location.longitude
         )
 
-        val userQuery = AuthActivity.userCollectionRef
+        val users = AuthActivity.db.collection("users")
+        val userQuery = users
             .whereEqualTo("uid", this.uid)
             .get()
         userQuery.addOnSuccessListener {
-            AuthActivity.userCollectionRef.document(it.first().id).set(userLocation, SetOptions.merge())
+            users.document(it.first().id).set(userLocation, SetOptions.merge())
         }
     }
 
