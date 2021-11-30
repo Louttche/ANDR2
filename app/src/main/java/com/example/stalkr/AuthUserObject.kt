@@ -19,11 +19,12 @@ object AuthUserObject {
             "longitude" to location.longitude
         )
 
-        val userQuery = AuthActivity.userCollectionRef
+        val users = AuthActivity.db.collection("users")
+        val userQuery = users
             .whereEqualTo("uid", this.uid)
             .get()
         userQuery.addOnSuccessListener {
-            AuthActivity.userCollectionRef.document(it.first().id).set(userLocation, SetOptions.merge())
+            users.document(it.first().id).set(userLocation, SetOptions.merge())
         }
     }
 }

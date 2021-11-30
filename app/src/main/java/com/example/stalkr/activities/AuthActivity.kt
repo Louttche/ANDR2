@@ -25,8 +25,6 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
 
     companion object AuthData {
         val db = FirebaseFirestore.getInstance()
-        val userCollectionRef = db.collection("users")
-        val groupCollectionRef = db.collection("groups")
         val userDbData = Firebase.auth.currentUser
     }
 
@@ -59,7 +57,7 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
             .addOnSuccessListener { documents ->
                 // Set this user as active in DB
                 val userActive = hashMapOf("isActive" to true)
-                userCollectionRef.document(documents.first().id).set(userActive, SetOptions.merge())
+                db.collection("users").document(documents.first().id).set(userActive, SetOptions.merge())
 
                 // Update the currentUser model
                 //userData.updateUserFromDB(firebaseAuth.currentUser!!.uid)

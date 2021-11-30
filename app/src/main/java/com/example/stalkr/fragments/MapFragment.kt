@@ -232,7 +232,8 @@ class MapFragment : Fragment(),
     }
 
     private fun retrieveOtherUsersLocationFromDB() {
-        val userQuery = AuthActivity.userCollectionRef
+        val users = AuthActivity.db.collection("users")
+        val userQuery = users
             .whereNotEqualTo("uid", AuthActivity.userDbData!!.uid)
             //.whereEqualTo("isActive", true) // not working for some reason
             .get()

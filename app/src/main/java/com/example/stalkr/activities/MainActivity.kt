@@ -56,11 +56,13 @@ class MainActivity : AppCompatActivity() {
     private fun signOut() {
         // Set auth user as 'inactive' in DB
         AuthUserObject.isActive = false
-        AuthActivity.userCollectionRef.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
+        val users = AuthActivity.db.collection("users")
+
+        users.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
             .get()
             .addOnSuccessListener { documents ->
                 val userActive = hashMapOf("isActive" to false)
-                AuthActivity.userCollectionRef.document(documents.first().id).set(userActive, SetOptions.merge())
+                users.document(documents.first().id).set(userActive, SetOptions.merge())
             }
 
         val intent = Intent(this, AuthActivity::class.java)
