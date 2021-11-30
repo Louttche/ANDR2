@@ -1,5 +1,6 @@
 package com.example.stalkr.fragments
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.example.stalkr.MainActivity
 import org.junit.Assert.*
 import org.junit.Test
