@@ -49,14 +49,13 @@ class MainActivity : AppCompatActivity() {
             // If we got here, the user's action was not recognized.
             // Invoke the superclass to handle it.
             super.onOptionsItemSelected(item)
-
         }
         return true
     }
 
     private fun signOut() {
         // Set auth user as 'inactive' in DB
-        AuthActivity.userData.isActive = false
+        AuthUserObject.isActive = false
         AuthActivity.userCollectionRef.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
             .get()
             .addOnSuccessListener { documents ->

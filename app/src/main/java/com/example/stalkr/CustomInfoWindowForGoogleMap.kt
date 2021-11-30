@@ -2,6 +2,7 @@ package com.example.stalkr
 
 import android.app.Activity
 import android.content.Context
+import android.util.Log
 
 import android.view.View
 import android.widget.Button
@@ -28,11 +29,13 @@ class CustomInfoWindowForGoogleMap(context: Context) : GoogleMap.InfoWindowAdapt
         val btn_viewprofile : Button = mInfoView.findViewById(R.id.btn_view_profile)
         btn_viewprofile.setOnClickListener{
             // TODO: View this user's profile
+            Log.d("wow", "Clicked on view user's profile button")
         }
 
         val btn_invitetogroup : Button = mInfoView.findViewById(R.id.btn_invite_group)
         btn_invitetogroup.setOnClickListener{
             // TODO: Invite this user to a group
+            Log.d("wow", "Clicked on view invite user button")
         }
 
         return mInfoView

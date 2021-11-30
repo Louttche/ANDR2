@@ -6,7 +6,7 @@ import com.example.stalkr.activities.AuthActivity
 import com.google.firebase.firestore.IgnoreExtraProperties
 
 @IgnoreExtraProperties
-data class ChatData(var cid: String, var members: MutableList<UserData>) {
+data class ChatData(var cid: String, var members: MutableList<UserProfileData>) {
 
     // Fields (constructed)
     var messages: MutableList<MessageData> = mutableListOf()

@@ -1,19 +1,19 @@
 package com.example.stalkr.data
-import android.content.ContentValues
-import android.util.Log
+import android.location.Location
 import com.example.stalkr.activities.AuthActivity
 import com.google.firebase.firestore.IgnoreExtraProperties
+import com.google.firebase.firestore.SetOptions
 
-
+// Common data for all users // TODO: make it into Profile?
 @IgnoreExtraProperties
-data class UserData (var uid: String, var name: String) {
+data class UserProfileData (var uid: String, var name: String) {
 
     // Fields
     var isActive: Boolean = false
     var groups: MutableList<GroupData>? = mutableListOf()
 
     // Methods
-    fun updateUserFromDB(id: String){
+    fun updateUserProfileFromDB(id: String){
         this.uid = id
         AuthActivity.userCollectionRef.whereEqualTo("uid", this.uid)
             .get()
@@ -34,10 +34,24 @@ data class UserData (var uid: String, var name: String) {
             }
     }
 
+    fun updateUserProfileLocationInDB(location: Location){
+        val userLocation = hashMapOf(
+            "latitude" to location.latitude,
+            "longitude" to location.longitude
+        )
+
+        val userQuery = AuthActivity.userCollectionRef
+            .whereEqualTo("uid", this.uid)
+            .get()
+        userQuery.addOnSuccessListener {
+            AuthActivity.userCollectionRef.document(it.first().id).set(userLocation, SetOptions.merge())
+        }
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
-        other as UserData
+        other as UserProfileData
         if (uid != other.uid) return false
         return true
     }

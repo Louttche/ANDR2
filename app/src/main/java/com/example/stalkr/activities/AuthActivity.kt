@@ -9,13 +9,13 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.FragmentTransaction
 import com.example.stalkr.MainActivity
 import com.example.stalkr.R
+import com.example.stalkr.AuthUserObject
 import com.example.stalkr.fragments.LoginFragment
 import com.example.stalkr.fragments.RegistrationFragment
 import com.example.stalkr.interfaces.AuthFragmentCallback
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
-import com.example.stalkr.data.UserData
 import com.google.firebase.firestore.SetOptions
 
 class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
@@ -28,7 +28,6 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
         val userCollectionRef = db.collection("users")
         val groupCollectionRef = db.collection("groups")
         val userDbData = Firebase.auth.currentUser
-        var userData = UserData("", "")
     }
 
     override fun onStart() {
@@ -63,7 +62,12 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
                 userCollectionRef.document(documents.first().id).set(userActive, SetOptions.merge())
 
                 // Update the currentUser model
-                userData.updateUserFromDB(firebaseAuth.currentUser!!.uid)
+                //userData.updateUserFromDB(firebaseAuth.currentUser!!.uid)
+                // OR
+                // Update user object
+                AuthUserObject.uid = documents.first().data["uid"].toString()
+                AuthUserObject.name = documents.first().data["name"].toString()
+                AuthUserObject.isActive = documents.first().data["isActive"].toString().toBoolean()
             }
             .addOnFailureListener { exception ->
                 Log.w(ContentValues.TAG, "Error getting documents: ", exception)

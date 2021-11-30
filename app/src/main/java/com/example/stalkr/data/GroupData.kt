@@ -6,23 +6,22 @@ import com.example.stalkr.activities.AuthActivity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.ktx.Firebase
 
 @IgnoreExtraProperties
 data class GroupData(var gid: String, var title: String, var chat: ChatData){
 
     // Fields
-    var members: MutableList<UserData> = mutableListOf()
+    var members: MutableList<UserProfileData> = mutableListOf()
 
     // Methods
-    fun AddMember(user: UserData){
-        if (!this.members.contains(user))
-            this.members.add(user)
+    fun AddMember(userProfile: UserProfileData){
+        if (!this.members.contains(userProfile))
+            this.members.add(userProfile)
     }
 
-    fun RemoveMember(user: UserData){
-        if (this.members.contains(user))
-            this.members.remove(user)
+    fun RemoveMember(userProfile: UserProfileData){
+        if (this.members.contains(userProfile))
+            this.members.remove(userProfile)
     }
 
     fun UpdateGroupInDB(){

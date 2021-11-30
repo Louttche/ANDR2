@@ -12,12 +12,18 @@ import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 
+@RunWith(AndroidJUnit4::class)
 internal class MapFragmentTest{
 
     //val VALID_MAINACTIVITY : MainActivity = mock(MainActivity.class)
 
     @Test
     fun MapFocusesUserWhenMapStarts() {
+
+    }
+
+    @Test
+    fun StartMapOnlyIfUserAuthenticated(){
 
     }
 

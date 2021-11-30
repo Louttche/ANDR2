@@ -4,7 +4,7 @@ import com.google.firebase.Timestamp
 import com.google.firebase.firestore.IgnoreExtraProperties
 
 @IgnoreExtraProperties
-data class MessageData(var mid: String, var content: String, var from: UserData){
+data class MessageData(var mid: String, var content: String, var from: UserProfileData){
 
     // Fields
     var timestamp: Timestamp = Timestamp.now()

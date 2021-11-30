@@ -17,8 +17,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.example.stalkr.activities.AuthActivity
-import com.example.stalkr.data.InfoWindowData
-import com.example.stalkr.data.UserData
+import com.example.stalkr.data.UserProfileData
 
 import com.example.stalkr.databinding.FragmentMapBinding
 import com.google.android.gms.common.api.ResolvableApiException
@@ -32,7 +31,6 @@ import com.google.android.gms.location.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
-import com.google.firebase.firestore.SetOptions
 import com.google.android.gms.maps.MapView
 
 class MapFragment : Fragment(),
@@ -45,30 +43,29 @@ class MapFragment : Fragment(),
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
 
+    //private val currentUser get() = AuthActivity.userData
+
     // MAP
     private var mapView: MapView? = null
     private lateinit var mMap: GoogleMap
 
     // LOCATION
     private lateinit var currentLocation: Location
-    private lateinit var lastLocation: Location
     private var locationUpdateState = false
+    private var userPositionViewport : LatLngBounds = LatLngBounds(LatLng(0.0,0.0), LatLng(0.0,0.0))
+    private var changeBounds: Boolean = true
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
     private lateinit var locationRequest: LocationRequest
+
+    // Google Markers
     private var userLocationMarker: Marker? = null
     private var otherUserLocationMarker: Marker? = null
-    private var otherUserLocationMarkers: Map<UserData, Marker>? = null
-    private var userPositionBounds : LatLngBounds = LatLngBounds(LatLng(0.0,0.0), LatLng(0.0,0.0))
-    private var changeBounds: Boolean = true
+    private var otherUserProfileLocationMarkers: Map<UserProfileData, Marker>? = null
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
-    }
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
     }
 
     override fun onCreateView(
@@ -111,50 +108,6 @@ class MapFragment : Fragment(),
         }
     }
 
-    private fun setupLocationCallback(){
-        Log.d(TAG,"setupLocationCallback")
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(p0: LocationResult) {
-                super.onLocationResult(p0)
-                Log.d(TAG,"onLocationResult")
-
-                if (::currentLocation.isInitialized){
-                    lastLocation = currentLocation
-                }
-                else
-                    lastLocation = p0.lastLocation
-
-                currentLocation = p0.lastLocation
-                setupLocationViewport()
-                saveLocationToDb(currentLocation)
-                placeMarkerOnMap(currentLocation)
-                retrieveOtherUsersLocationFromDB()
-            }
-        }
-    }
-
-    fun setupLocationViewport(){
-        if (changeBounds){
-            // if marker goes beyond the view bounds, center the camera on user
-            var meters_offset : Double = 30.0
-            var latOffset : Double = metersToLat(meters_offset) // y
-            var longOffset : Double = metersToLong(meters_offset, currentLocation.latitude) // x
-
-            userPositionBounds = LatLngBounds(
-                LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
-                LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
-            )
-            changeBounds = false
-        }
-
-        val currentlatLng = LatLng(currentLocation.latitude, currentLocation.longitude)
-        if (!userPositionBounds.contains(currentlatLng)){
-            changeBounds = true
-            moveCamera(currentLocation)
-        }
-    }
-
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
         mMap.uiSettings.isZoomControlsEnabled = true // not working with mapview for some reason
@@ -164,6 +117,7 @@ class MapFragment : Fragment(),
         mMap.setOnCameraMoveListener(this)
         mMap.setOnCameraMoveCanceledListener(this)
 
+        // Set up the custom info window
         val customInfoWindow = CustomInfoWindowForGoogleMap(requireContext())
         mMap!!.setInfoWindowAdapter(customInfoWindow)
 
@@ -172,7 +126,7 @@ class MapFragment : Fragment(),
 
     private fun setupMap() {
         Log.d(TAG,"setupMap")
-        // If permissions are granted, set up map
+        // Check permissions for fusedLocationClient listener
         if (checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -189,6 +143,27 @@ class MapFragment : Fragment(),
                     moveCamera(currentLocation);
                 }
             }
+        }
+    }
+
+    fun setupLocationViewport(){
+        if (changeBounds){
+            // if marker goes beyond the view bounds, center the camera on user
+            var meters_offset : Double = 30.0
+            var latOffset : Double = MapUtils.metersToLat(meters_offset) // y
+            var longOffset : Double = MapUtils.metersToLong(meters_offset, currentLocation.latitude) // x
+
+            userPositionViewport = LatLngBounds(
+                LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
+                LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
+            )
+            changeBounds = false
+        }
+
+        val currentlatLng = LatLng(currentLocation.latitude, currentLocation.longitude)
+        if (!userPositionViewport.contains(currentlatLng)){
+            changeBounds = true
+            moveCamera(currentLocation)
         }
     }
 
@@ -224,39 +199,35 @@ class MapFragment : Fragment(),
             //Create a new marker
             val markerOptions = MarkerOptions()
             markerOptions.position(currentlatLng)
-            //markerOptions.rotation(location.bearing)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            markerOptions.title(AuthActivity.userData.name)
+            markerOptions.title(AuthUserObject.name) //AuthActivity.userData
             userLocationMarker = mMap.addMarker(markerOptions)
-
-            //val info = InfoWindowData(AuthActivity.userData.name)
-            //userLocationMarker!!.tag = info
+            userLocationMarker!!.tag = markerOptions.title
         } else {
             //use the previously created marker
             userLocationMarker!!.position = currentlatLng
-            //userLocationMarker!!.rotation = location.bearing
         }
     }
 
     // TODO: change string to USER data type in 'user' param
-    private fun placeOtherMarkerOnMap(latLng: LatLng, user: UserData) {
-        if (otherUserLocationMarkers != null){
+    private fun placeOtherMarkerOnMap(latLng: LatLng, userProfile: UserProfileData) {
+        if (otherUserProfileLocationMarkers != null){
             // if the user already has a marker, just update position
-            if (otherUserLocationMarkers!!.any{it.key == user}){
+            if (otherUserProfileLocationMarkers!!.any{it.key == userProfile}){
                 // TODO: old user marker stays where it is
-                otherUserLocationMarkers!![user]!!.position = latLng
+                otherUserProfileLocationMarkers!![userProfile]!!.position = latLng
             } else {
                 val markerOptions = MarkerOptions()
                 markerOptions.position(latLng)
                 markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
                 markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                markerOptions.title(user.name)
+                markerOptions.title(userProfile.name)
 
                 otherUserLocationMarker = mMap.addMarker(markerOptions)
-                otherUserLocationMarkers!!.toMutableMap().putIfAbsent(user, otherUserLocationMarker!!)
+                otherUserProfileLocationMarkers!!.toMutableMap().putIfAbsent(userProfile, otherUserLocationMarker!!)
             }
         } else{
-            otherUserLocationMarkers = mutableMapOf()
+            otherUserProfileLocationMarkers = mutableMapOf()
         }
     }
 
@@ -272,7 +243,7 @@ class MapFragment : Fragment(),
                     val longitude = document.get("longitude").toString().toDouble()
                     val latLng = LatLng(latitude, longitude)
 
-                    val otherUser = UserData(document.get("uid").toString(), document.get("name").toString())
+                    val otherUser = UserProfileData(document.get("uid").toString(), document.get("name").toString())
                     placeOtherMarkerOnMap(latLng, otherUser)
                 }
             }
@@ -282,31 +253,32 @@ class MapFragment : Fragment(),
         }
     }
 
-    private fun saveLocationToDb(location: Location) {
-        Log.d(TAG,"saveLocationToDb")
-        //val db = FirebaseFirestore.getInstance()
-        val userLocation = hashMapOf(
-            "latitude" to location.latitude,
-            "longitude" to location.longitude
-        )
-
-        val userQuery = AuthActivity.userCollectionRef
-            .whereEqualTo("uid", AuthActivity.userDbData!!.uid)
-            .get()
-        userQuery.addOnSuccessListener {
-            for(document in it) {
-                AuthActivity.userCollectionRef.document(document.id).set(userLocation, SetOptions.merge())
-            }
-        }
-    }
-
-    // TODO: Pop up little window to show some more info/options for the selected user
     override fun onMarkerClick(p0: Marker) = false
 
     override fun onLocationChanged(location: Location) {
+        Log.d(TAG, "onLocationChanged")
         // This really doesn't do anything, but I left it for testing purposes.
         placeMarkerOnMap(location)
-        saveLocationToDb(location)
+        //saveLocationToDb(location)
+        AuthUserObject.updateUserLocationInDB(location)
+    }
+
+    private fun setupLocationCallback(){
+        Log.d(TAG,"setupLocationCallback")
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+        locationCallback = object : LocationCallback() {
+            override fun onLocationResult(p0: LocationResult) {
+                super.onLocationResult(p0)
+                Log.d(TAG,"onLocationResult")
+
+                currentLocation = p0.lastLocation
+                setupLocationViewport()
+                //saveLocationToDb(currentLocation) // moved to UserData data class
+                AuthUserObject.updateUserLocationInDB(currentLocation)
+                placeMarkerOnMap(currentLocation)
+                retrieveOtherUsersLocationFromDB()
+            }
+        }
     }
 
     private fun startLocationUpdates() {
@@ -396,31 +368,20 @@ class MapFragment : Fragment(),
     override fun onCameraMoveStarted(p0: Int) {
         Log.d(ContentValues.TAG, "onCameraMoveStarted");
     }
-
     // while the camera is moving or the user is interacting with the touch screen.
     override fun onCameraMove() {
         Log.d(ContentValues.TAG, "onCameraMove");
     }
-
     // when the current camera movement has been interrupted.
     override fun onCameraMoveCanceled() {
         Log.d(ContentValues.TAG, "onCameraMoveCanceled");
     }
-
     // when the camera stops moving and the user has stopped interacting with the map.
     override fun onCameraIdle() {
         Log.d(ContentValues.TAG, "onCameraIdle");
     }
 
-    private fun metersToLat(meters: Double) : Double {
-        // assume 111,111 meters is 1 degree of latitude in y direction
-        return meters/111111
-    }
-
-    private fun metersToLong(meters: Double, lat: Double) : Double {
-        // assume 111,111 * cos(latitude) meters is 1 degree of longitude in the x direction
-        return meters/111111 * kotlin.math.cos(lat)
-    }
+    // -- //
 
     override fun onDestroyView() {
         super.onDestroyView()
