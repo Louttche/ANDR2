@@ -6,7 +6,7 @@ import com.google.firebase.firestore.QueryDocumentSnapshot
 import com.google.firebase.firestore.SetOptions
 import com.google.rpc.context.AttributeContext
 
-// Common data for all users // TODO: make it into Profile?
+// Common data for all users to be shown in UI
 @IgnoreExtraProperties
 data class UserProfileData (val uid: String, var name: String? = null) {
 
@@ -15,6 +15,7 @@ data class UserProfileData (val uid: String, var name: String? = null) {
     var groups: MutableList<GroupData>? = mutableListOf()
 
     // Methods
+    
     /**
      *  @should set name to a default string if empty or null
      */

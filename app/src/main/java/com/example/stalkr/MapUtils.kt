@@ -2,6 +2,7 @@ package com.example.stalkr
 
 class MapUtils {
     companion object {
+
         fun metersToLat(meters: Double) : Double {
             // assume 111,111 meters is 1 degree of latitude in y direction
             return meters/111111
