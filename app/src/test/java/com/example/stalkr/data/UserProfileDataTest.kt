@@ -1,9 +1,9 @@
 package com.example.stalkr.data
 
 // Test
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Test
 import org.junit.Assert.*
-import com.google.common.truth.Truth.assertThat
 import org.mockito.Mock
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
@@ -19,21 +19,24 @@ import com.google.firebase.ktx.Firebase
 class UserProfileDataTest{
 
     @Test
-    fun setNameToEmptyIfNull_inUpdateUserProfileFromDB() {
-
-        //val usersCollection = firestore.collection("users")
-
+    fun setNameToDefaultStringIfEmptyOrNull_inUpdateUserProfileFromDB() {
         // arrange
-        //val userData = UserProfileData("valid_id", null)
+        //val userData_null = UserProfileData("valid_id", null)
+        //val userData_empty = UserProfileData("valid_id", "")
+
         // act
-        //userData.updateUserProfileFromDB("valid_id")
+        //userData_null.updateUserProfileFromDB("valid_id")
+        //userData_empty.updateUserProfileFromDB("valid_id")
+
         // assert
-        //assertThat(userData.name == "")
-        assertTrue(true)
+        //assertThat(userData_null.name == "N/A")
+        //assertThat(userData_empty.name == "N/A")
+
+        fail("Not yet implemented")
     }
 
     @Test
     fun throwNullPointerExceptionIfLocationIsNull_InUpdateLocationInDB(){
-        assertTrue(true)
+        fail("Not yet implemented")
     }
 }

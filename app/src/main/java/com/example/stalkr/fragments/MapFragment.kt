@@ -32,6 +32,7 @@ import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.MapView
+import com.google.firebase.firestore.QueryDocumentSnapshot
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
@@ -213,7 +214,6 @@ class MapFragment : Fragment(),
     }
 
     /**
-     * @should Set the user profile name to empty if is null
      * @should Set the user profile photo to default if is empty or null
      */
     private fun placeOtherMarkerOnMap(latLng: LatLng, userProfile: UserProfileData) {
@@ -244,7 +244,6 @@ class MapFragment : Fragment(),
         val users = AuthActivity.db.collection("users")
         val userQuery = users
             .whereNotEqualTo("uid", AuthActivity.userDbData!!.uid)
-            //.whereEqualTo("isActive", true) // not working for some reason
             .get()
         userQuery.addOnSuccessListener {
             for (document in it) {
@@ -253,7 +252,9 @@ class MapFragment : Fragment(),
                     val longitude = document.get("longitude").toString().toDouble()
                     val latLng = LatLng(latitude, longitude)
 
-                    val otherUser = UserProfileData(document.get("uid").toString(), document.get("name").toString())
+                    val otherUser = UserProfileData(document.get("uid").toString())
+                    // Make sure the user is updated from the DB before displaying info about them
+                    otherUser.updateUserProfileFromDB(document)
                     placeOtherMarkerOnMap(latLng, otherUser)
                 }
             }
@@ -283,7 +284,7 @@ class MapFragment : Fragment(),
 
                 currentLocation = p0.lastLocation
                 setupLocationViewport()
-                //saveLocationToDb(currentLocation) // moved to UserData data class
+                //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
                 AuthUserObject.updateUserLocationInDB(currentLocation)
                 placeMarkerOnMap(currentLocation)
                 retrieveOtherUsersLocationFromDB()
