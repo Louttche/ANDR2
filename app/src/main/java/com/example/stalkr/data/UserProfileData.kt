@@ -15,14 +15,13 @@ data class UserProfileData (val uid: String, var name: String? = null) {
     var groups: MutableList<GroupData>? = mutableListOf()
 
     // Methods
-
     /**
      *  @should set name to a default string if empty or null
      */
     fun updateUserProfileFromDB(document: QueryDocumentSnapshot){
         this.name = document.data["name"].toString()
         if (this.name == null || this.name == "")
-            this.name = "N/A"
+            this.name = "Name N/A"
         this.isActive = document.data["isActive"].toString().toBoolean()
     }
 

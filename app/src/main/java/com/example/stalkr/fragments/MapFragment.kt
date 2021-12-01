@@ -33,6 +33,7 @@ import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.MapView
 import com.google.firebase.firestore.QueryDocumentSnapshot
+import java.lang.NullPointerException
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
@@ -241,27 +242,32 @@ class MapFragment : Fragment(),
      * @should Place a marker for other user on the map
      */
     private fun retrieveOtherUsersLocationFromDB() {
-        val users = AuthActivity.db.collection("users")
-        val userQuery = users
-            .whereNotEqualTo("uid", AuthActivity.userDbData!!.uid)
-            .get()
-        userQuery.addOnSuccessListener {
-            for (document in it) {
-                if (document.get("isActive").toString().toBoolean()){
-                    val latitude = document.get("latitude").toString().toDouble()
-                    val longitude = document.get("longitude").toString().toDouble()
-                    val latLng = LatLng(latitude, longitude)
+        try{
+            val users = AuthActivity.db.collection("users")
+            val userQuery = users
+                .whereNotEqualTo("uid", AuthActivity.userDbData!!.uid)
+                .get()
+            userQuery.addOnSuccessListener {
+                for (document in it) {
+                    if (document.get("isActive").toString().toBoolean()){
+                        val latitude = document.get("latitude").toString().toDouble()
+                        val longitude = document.get("longitude").toString().toDouble()
+                        val latLng = LatLng(latitude, longitude)
 
-                    val otherUser = UserProfileData(document.get("uid").toString())
-                    // Make sure the user is updated from the DB before displaying info about them
-                    otherUser.updateUserProfileFromDB(document)
-                    placeOtherMarkerOnMap(latLng, otherUser)
+                        val otherUser = UserProfileData(document.get("uid").toString())
+                        // Make sure the user is updated from the DB before displaying info about them
+                        otherUser.updateUserProfileFromDB(document)
+                        placeOtherMarkerOnMap(latLng, otherUser)
+                    }
                 }
             }
+            userQuery.addOnFailureListener { exception ->
+                Log.w(ContentValues.TAG, "Error getting documents.", exception)
+            }
+        } catch (e: NullPointerException){
+            Log.d(TAG, "Could not retrieve other user's location - $e")
         }
-        userQuery.addOnFailureListener { exception ->
-            Log.w(ContentValues.TAG, "Error getting documents.", exception)
-        }
+
     }
 
     override fun onMarkerClick(p0: Marker) = false

@@ -15,11 +15,17 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings
 import java.lang.IllegalStateException
 import android.util.Log
 import androidx.test.espresso.matcher.ViewMatchers.*
+import androidx.test.rule.GrantPermissionRule
 import com.adevinta.android.barista.interaction.BaristaMenuClickInteractions.clickMenu
 import org.junit.*
 
 @RunWith(AndroidJUnit4ClassRunner::class)
 class MainActivityTest {
+
+    @get:Rule
+    var grantFineLocationPermissionRule: GrantPermissionRule = GrantPermissionRule.grant("android.permission.ACCESS_FINE_LOCATION")
+    @get:Rule
+    var grantCoarseLocationPermissionRule: GrantPermissionRule = GrantPermissionRule.grant("android.permission.ACCESS_COARSE_LOCATION")
 
     private val firestore : FirebaseFirestore = FirebaseFirestore.getInstance()
     private val firebaseAuth : FirebaseAuth = FirebaseAuth.getInstance()

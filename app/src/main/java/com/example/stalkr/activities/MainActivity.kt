@@ -1,6 +1,7 @@
 package com.example.stalkr
 
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -19,6 +20,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.ktx.Firebase
 import com.google.rpc.context.AttributeContext
+import java.lang.NullPointerException
 import java.net.URL
 
 class MainActivity : AppCompatActivity() {
@@ -54,20 +56,24 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun signOut() {
-        // Set auth user as 'inactive' in DB
-        AuthUserObject.isActive = false
-        val users = AuthActivity.db.collection("users")
+        try {
+            // Set auth user as 'inactive' in DB
+            AuthUserObject.isActive = false
+            val users = AuthActivity.db.collection("users")
 
-        users.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
-            .get()
-            .addOnSuccessListener { documents ->
-                val userActive = hashMapOf("isActive" to false)
-                users.document(documents.first().id).set(userActive, SetOptions.merge())
-            }
-
-        val intent = Intent(this, AuthActivity::class.java)
-        startActivity(intent)
-        finish()
+            users.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
+                .get()
+                .addOnSuccessListener { documents ->
+                    val userActive = hashMapOf("isActive" to false)
+                    users.document(documents.first().id).set(userActive, SetOptions.merge())
+                }
+        } catch (e: NullPointerException){
+            Log.d(TAG, "Could not sign out - $e")
+        } finally {
+            val intent = Intent(this, AuthActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
     }
 
     // function to change the fragment which is used to reduce the lines of code
