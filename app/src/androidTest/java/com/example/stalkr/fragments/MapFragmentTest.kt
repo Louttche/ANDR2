@@ -8,14 +8,26 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.runner.RunWith
-import org.mockito.Mock
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
+import com.google.common.truth.Truth.assertThat
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.rule.GrantPermissionRule
 
 @RunWith(AndroidJUnit4::class)
 internal class MapFragmentTest{
 
-    //val VALID_MAINACTIVITY : MainActivity = mock(MainActivity.class)
+    @Rule
+    var grantFineLocationPermissionRule = GrantPermissionRule.grant("android.permission.ACCESS_FINE_LOCATION")
+    @Rule
+    var grantCoarseLocationPermissionRule = GrantPermissionRule.grant("android.permission.ACCESS_COARSE_LOCATION")
+
+    /* Setup Example
+    private lateinit var logHistory: LogHistory
+
+    @Before
+    fun createLogHistory() {
+        logHistory = LogHistory()
+    }
+     */
 
     @Test
     fun MapFocusesUserWhenMapStarts() {

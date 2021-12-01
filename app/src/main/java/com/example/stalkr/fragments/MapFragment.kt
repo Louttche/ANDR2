@@ -60,7 +60,6 @@ class MapFragment : Fragment(),
 
     // Google Markers
     private var userLocationMarker: Marker? = null
-    private var otherUserLocationMarker: Marker? = null
     private var otherUserProfileLocationMarkers: Map<UserProfileData, Marker>? = null
 
     companion object{
@@ -191,6 +190,10 @@ class MapFragment : Fragment(),
         }
     }
 
+    /**
+     *  @should Set the marker title as the user name
+     *  @should Set the user name to empty if is null
+     */
     private fun placeMarkerOnMap(location: Location) {
         Log.d(TAG, "placeMarkerOnMap")
         val currentlatLng = LatLng(location.latitude, location.longitude)
@@ -209,7 +212,10 @@ class MapFragment : Fragment(),
         }
     }
 
-    // TODO: change string to USER data type in 'user' param
+    /**
+     * @should Set the user profile name to empty if is null
+     * @should Set the user profile photo to default if is empty or null
+     */
     private fun placeOtherMarkerOnMap(latLng: LatLng, userProfile: UserProfileData) {
         if (otherUserProfileLocationMarkers != null){
             // if the user already has a marker, just update position
@@ -223,7 +229,7 @@ class MapFragment : Fragment(),
                 markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
                 markerOptions.title(userProfile.name)
 
-                otherUserLocationMarker = mMap.addMarker(markerOptions)
+                val otherUserLocationMarker: Marker? = mMap.addMarker(markerOptions)
                 otherUserProfileLocationMarkers!!.toMutableMap().putIfAbsent(userProfile, otherUserLocationMarker!!)
             }
         } else{
@@ -231,6 +237,9 @@ class MapFragment : Fragment(),
         }
     }
 
+    /**
+     * @should Place a marker for other user on the map
+     */
     private fun retrieveOtherUsersLocationFromDB() {
         val users = AuthActivity.db.collection("users")
         val userQuery = users
@@ -307,7 +316,6 @@ class MapFragment : Fragment(),
             startLocationUpdates()
         }
         task.addOnFailureListener { e ->
-            // 6
             if (e is ResolvableApiException) {
                 // Location settings are not satisfied, but this can be fixed
                 // by showing the user a dialog.
@@ -355,16 +363,13 @@ class MapFragment : Fragment(),
     /* CAMERA STUFF */
 
     private fun moveCamera(location: Location){
-        Log.d("camera", "in changeCamera");
-
+        Log.d("camera", "in moveCamera");
         val cameraPosition = CameraPosition.Builder()
             .target(LatLng(location.latitude, location.longitude))
             .zoom(16f)            // Sets the zoom
             .build()                    // Creates a CameraPosition from the builder
-
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
-
     // when the camera starts moving.
     override fun onCameraMoveStarted(p0: Int) {
         Log.d(ContentValues.TAG, "onCameraMoveStarted");

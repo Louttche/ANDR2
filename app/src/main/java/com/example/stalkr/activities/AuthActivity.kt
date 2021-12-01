@@ -59,9 +59,6 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
                 val userActive = hashMapOf("isActive" to true)
                 db.collection("users").document(documents.first().id).set(userActive, SetOptions.merge())
 
-                // Update the currentUser model
-                //userData.updateUserFromDB(firebaseAuth.currentUser!!.uid)
-                // OR
                 // Update user object
                 AuthUserObject.uid = documents.first().data["uid"].toString()
                 AuthUserObject.name = documents.first().data["name"].toString()

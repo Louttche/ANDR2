@@ -7,20 +7,29 @@ import com.google.rpc.context.AttributeContext
 
 // Common data for all users // TODO: make it into Profile?
 @IgnoreExtraProperties
-data class UserProfileData (var uid: String, var name: String) {
+data class UserProfileData (var uid: String, var name: String?) {
 
     // Fields
     var isActive: Boolean = false
     var groups: MutableList<GroupData>? = mutableListOf()
 
     // Methods
+
+    /**
+     *  @should set name to empty if null
+     */
     fun updateUserProfileFromDB(id: String){
         val users = AuthActivity.db.collection("users")
         this.uid = id
         users.whereEqualTo("uid", this.uid)
             .get()
             .addOnSuccessListener { usersDocuments ->
-                this.name = usersDocuments.first().data["name"].toString()
+                val namedb = usersDocuments.first().data["name"].toString()
+                if (namedb == null)
+                    this.name = ""
+                else
+                    this.name = namedb
+
                 this.isActive = usersDocuments.first().data["isActive"].toString().toBoolean()
 
                 /*
@@ -36,6 +45,9 @@ data class UserProfileData (var uid: String, var name: String) {
             }
     }
 
+    /**
+     * @should throw a NullPointerException if location is null
+     */
     fun updateUserProfileLocationInDB(location: Location){
         val userLocation = hashMapOf(
             "latitude" to location.latitude,
