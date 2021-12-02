@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentTransaction
 import com.example.stalkr.MainActivity
 import com.example.stalkr.R
 import com.example.stalkr.AuthUserObject
-import com.example.stalkr.fragments.LoginFragment
+import com.example.stalkr.fragments.login.LoginFragment
 import com.example.stalkr.fragments.RegistrationFragment
 import com.example.stalkr.interfaces.AuthFragmentCallback
 import com.google.firebase.auth.ktx.auth
