@@ -9,7 +9,10 @@ class Verification {
         return if (email.isEmpty()) {
             isEmailEmpty = true
             false
-        } else return emailRegex.toRegex().matches(email)
+        } else  {
+            isEmailEmpty = false
+            emailRegex.toRegex().matches(email)
+        }
     }
 
     fun isPasswordValid(password: String): Boolean {
@@ -17,7 +20,10 @@ class Verification {
         return if (password.isEmpty()) {
             isPasswordEmpty = true
             false
-        } else passwordRegex.toRegex().matches(password)
+        } else {
+            isPasswordEmpty = false
+            passwordRegex.toRegex().matches(password)
+        }
     }
 
     fun getIsEmailEmpty(): Boolean {
