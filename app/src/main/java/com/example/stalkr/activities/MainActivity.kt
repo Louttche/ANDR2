@@ -6,21 +6,23 @@ import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.os.ParcelFileDescriptor
 import android.util.Log
+import android.content.ContentValues.TAG
+import android.content.Intent
+import android.view.Menu
+import android.view.MenuItem
 
 import com.example.stalkr.databinding.ActivityMainBinding
 import androidx.fragment.app.Fragment
-import com.google.firebase.firestore.FirebaseFirestore
+import com.example.stalkr.activities.AuthActivity
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.SetOptions
+import com.google.firebase.ktx.Firebase
+import java.lang.NullPointerException
 
 class MainActivity : AppCompatActivity() {
 
-    // MAIN
     private lateinit var binding: ActivityMainBinding
-
-    // AUTH
-    var db: FirebaseFirestore? = FirebaseFirestore.getInstance()
-    //private var userName: String = "Sally"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +34,45 @@ class MainActivity : AppCompatActivity() {
 
         // when app is initially opened the Map Fragment should be visible
         changeFragment(MapFragment())
+    }
+
+    /* Auth */
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_home_actions, menu)
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (R.id.action_logout == item.itemId) {
+            Firebase.auth.signOut()
+            signOut()
+        } else {
+            // If we got here, the user's action was not recognized.
+            // Invoke the superclass to handle it.
+            super.onOptionsItemSelected(item)
+        }
+        return true
+    }
+
+    private fun signOut() {
+        try {
+            // Set auth user as 'inactive' in DB
+            AuthUserObject.isActive = false
+            val users = AuthActivity.db.collection("users")
+
+            users.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
+                .get()
+                .addOnSuccessListener { documents ->
+                    val userActive = hashMapOf("isActive" to false)
+                    users.document(documents.first().id).set(userActive, SetOptions.merge())
+                }
+        } catch (e: NullPointerException){
+            Log.d(TAG, "Could not sign out - $e")
+        } finally {
+            val intent = Intent(this, AuthActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
     }
 
     // function to change the fragment which is used to reduce the lines of code

@@ -20,4 +20,10 @@
     <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="mylocationbutton">myLocationButton</string>
     <string name="title_activity_main" />
+    <string name="invite">Invite</string>
+    <string name="textview">TextView</string>
+    <string name="view">View</string>
+    <string name="profile_photo_of_user">profile photo of user</string>
+    <string name="bottom_wave_vector">bottom wave vector</string>
+    <string name="top_wave_vector">top wave vector</string>
 </resources>

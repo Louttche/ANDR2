@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:scaleY="1"
-    tools:context=".fragments.LoginFragment">
+    tools:context=".fragments.login.LoginFragment">
 
     <ImageView
         android:id="@+id/imageView"
@@ -14,6 +14,7 @@
         android:scaleType="fitXY"
         android:scaleY="1.1"
         android:src="@drawable/ic_wave"
+        android:contentDescription="@string/bottom_wave_vector"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -26,6 +27,7 @@
         android:rotation="180"
         android:scaleType="centerCrop"
         android:scaleY="1.1"
+        android:contentDescription="@string/top_wave_vector"
         android:src="@drawable/ic_wave"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"

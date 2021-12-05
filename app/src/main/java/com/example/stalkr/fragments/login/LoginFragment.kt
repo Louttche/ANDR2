@@ -1,9 +1,7 @@
-package com.example.stalkr.fragments
+package com.example.stalkr.fragments.login
 
 import android.content.Context
-import android.content.Intent
 import android.os.Bundle
-import android.util.Patterns
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -12,21 +10,20 @@ import android.widget.Button
 import android.widget.TextView
 import com.example.stalkr.R
 import com.example.stalkr.interfaces.AuthFragmentCallback
+import com.example.stalkr.repositories.AuthRepoImpl
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
-class LoginFragment : Fragment() {
+class LoginFragment : Fragment(), LoginContract.View {
     private lateinit var authFragmentCallback: AuthFragmentCallback
     private lateinit var textInputEditTextEmail: TextInputEditText
     private lateinit var textInputEditTextPassword: TextInputEditText
     private lateinit var textViewLoginErrorMsg: TextView
     private lateinit var buttonLogin: Button
     private lateinit var buttonShowRegistration: Button
-    private var isValid = true
     private lateinit var textInputLayoutEmail: TextInputLayout
     private lateinit var textInputLayoutPassword: TextInputLayout
+    private var presenter: LoginPresenter? = null
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -43,6 +40,11 @@ class LoginFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_login, container, false)
+
+        // Initialized presenter
+        setPresenter()
+
+        // Initialized views
         buttonLogin = view.findViewById(R.id.buttonLogin)
         buttonShowRegistration = view.findViewById(R.id.buttonShowRegistration)
         textViewLoginErrorMsg = view.findViewById(R.id.textViewLoginErrorMsg)
@@ -51,63 +53,48 @@ class LoginFragment : Fragment() {
         textInputLayoutEmail = view.findViewById(R.id.textFieldEmail)
         textInputLayoutPassword = view.findViewById(R.id.textFieldPassword)
 
+        // Set Listeners
         buttonShowRegistration.setOnClickListener {
             authFragmentCallback.onButtonClickShowRegistration()
         }
-
         buttonLogin.setOnClickListener {
-            // Verify if email and password is valid
-            verifyEmail()
-            verifyPassword()
-
-            // Login
-            if (isValid) {
-                loginWithEmailAndPassword(
-                    textInputEditTextEmail.text.toString().trim(),
-                    textInputEditTextPassword.text.toString()
-                )
-            } else {
-                isValid = true
-            }
+            val email = textInputEditTextEmail.text.toString()
+            val password = textInputEditTextPassword.text.toString()
+            presenter?.onButtonLoginClicked(email, password)
         }
         return view
     }
 
-    private fun loginWithEmailAndPassword(email: String, password: String) {
-        val firebaseAuth = Firebase.auth
-
-        firebaseAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                authFragmentCallback.onAuthenticationComplete()
-            } else {
-                textViewLoginErrorMsg.text = task.exception?.message
-            }
-        }
+    override fun showLoginError(msg: String) {
+        textViewLoginErrorMsg.text = msg
     }
 
-    private fun verifyEmail() {
-        // Check if email is empty or invalid
-        if (textInputEditTextEmail.text.toString().isEmpty()) {
-            isValid = false
-            textInputLayoutEmail.error = resources.getString(R.string.email_error)
-        } else if (!Patterns.EMAIL_ADDRESS.matcher(textInputEditTextEmail.text.toString().trim())
-                .matches()
-        ) {
-            isValid = false
-            textInputLayoutEmail.error = resources.getString(R.string.error_invalid_email)
-        } else {
-            textInputLayoutEmail.isErrorEnabled = false
-        }
+    override fun showEmptyPasswordError() {
+        textInputLayoutPassword.error = resources.getString(R.string.password_error)
     }
 
-    private fun verifyPassword() {
-        // Check if password is empty or invalid
-        if (textInputEditTextPassword.text.toString().isEmpty()) {
-            isValid = false
-            textInputLayoutPassword.error = resources.getString(R.string.password_error)
-        } else {
-            textInputLayoutPassword.isErrorEnabled = false
-        }
+    override fun showInvalidEmailError() {
+        textInputLayoutEmail.error = resources.getString(R.string.error_invalid_email)
+    }
+
+    override fun showEmptyEmailError() {
+        textInputLayoutEmail.error = resources.getString(R.string.email_error)
+    }
+
+    override fun disableEmailLayoutError() {
+        textInputLayoutEmail.isErrorEnabled = false
+    }
+
+    override fun disablePasswordLayoutError() {
+        textInputLayoutPassword.isErrorEnabled = false
+    }
+
+    override fun showHomeScreen() {
+        authFragmentCallback.onAuthenticationComplete()
+    }
+
+    override fun setPresenter() {
+        presenter = LoginPresenter(this, AuthRepoImpl())
     }
 
 }
