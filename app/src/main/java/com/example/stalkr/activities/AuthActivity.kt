@@ -1,6 +1,7 @@
 package com.example.stalkr.activities
 
 import android.content.ContentValues
+import android.content.ContentValues.TAG
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -63,6 +64,8 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
                 AuthUserObject.uid = documents.first().data["uid"].toString()
                 AuthUserObject.name = documents.first().data["name"].toString()
                 AuthUserObject.isActive = documents.first().data["isActive"].toString().toBoolean()
+
+                Log.d(TAG, AuthUserObject.uid);
             }
             .addOnFailureListener { exception ->
                 Log.w(ContentValues.TAG, "Error getting documents: ", exception)

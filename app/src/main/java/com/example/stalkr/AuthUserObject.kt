@@ -27,7 +27,11 @@ object AuthUserObject {
                 .whereEqualTo("uid", this.uid)
                 .get()
             userQuery.addOnSuccessListener {
-                users.document(it.first().id).set(userLocation, SetOptions.merge())
+                try {
+                    users.document(it.first().id).set(userLocation, SetOptions.merge())
+                } catch (e: NoSuchElementException) {
+                    Log.d(TAG, "No such element - $e")
+                }
             }
         } catch(e: NullPointerException){
             Log.d(TAG, "Could not update user's $name location in DB - $e")

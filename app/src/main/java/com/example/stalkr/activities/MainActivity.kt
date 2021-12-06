@@ -1,27 +1,24 @@
 package com.example.stalkr
 
-import android.content.ContentValues
-import android.content.ContentValues.TAG
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.AttributeSet
 import android.util.Log
+import android.content.ContentValues.TAG
+import android.content.Intent
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 
 import com.example.stalkr.databinding.ActivityMainBinding
 import androidx.fragment.app.Fragment
 import com.example.stalkr.activities.AuthActivity
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.ktx.Firebase
-import com.google.rpc.context.AttributeContext
 import java.lang.NullPointerException
-import java.net.URL
 
 class MainActivity : AppCompatActivity() {
 
@@ -29,6 +26,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        createNotificationChannel("Notification channel", "A channel for sending notifications");
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
@@ -82,6 +81,22 @@ class MainActivity : AppCompatActivity() {
             replace(binding.fragmentContainerViewMain.id, fragmentToChange)
             addToBackStack(null)
             commit()
+        }
+    }
+
+    private fun createNotificationChannel(name: String, descriptionText: String) {
+        // Create the NotificationChannel, but only on API 26+ because
+        // the NotificationChannel class is new and not in the support library
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Log.d("NOTIFICATIONS", "Created a notification channel")
+            val importance = NotificationManager.IMPORTANCE_HIGH
+            val channel = NotificationChannel("notification_channel", name, importance).apply {
+                description = descriptionText
+            }
+            // Register the channel with the system
+            val notificationManager: NotificationManager =
+                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.createNotificationChannel(channel)
         }
     }
 }

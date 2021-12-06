@@ -16,10 +16,10 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat.checkSelfPermission
-import com.example.stalkr.activities.AuthActivity
 import com.example.stalkr.data.UserProfileData
 
 import com.example.stalkr.databinding.FragmentMapBinding
+import com.example.stalkr.services.NotificationManager
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
@@ -31,9 +31,10 @@ import com.google.android.gms.location.*
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.gms.maps.MapView
-import com.google.firebase.firestore.QueryDocumentSnapshot
-import java.lang.NullPointerException
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
@@ -45,6 +46,11 @@ class MapFragment : Fragment(),
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
 
+    // AUTH + DB
+    private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
+    // temp - for debug
+    private var userName: String = ""
+    private var uid: String = Firebase.auth.currentUser!!.uid
     //private val currentUser get() = AuthActivity.userData
 
     // MAP
@@ -63,6 +69,9 @@ class MapFragment : Fragment(),
     // Google Markers
     private var userLocationMarker: Marker? = null
     private var otherUserProfileLocationMarkers: Map<UserProfileData, Marker>? = null
+
+    private val othersInBoundsList: ArrayList<String> = arrayListOf()
+    private lateinit var notificationManager: NotificationManager
 
     companion object{
         private const val LOCATION_REQUEST_CODE = 1
@@ -88,6 +97,8 @@ class MapFragment : Fragment(),
 
         mapView = _binding!!.mapView;
         mapView!!.onCreate(savedInstanceState)
+
+        notificationManager = NotificationManager(requireContext())
 
         // First check for location permissions
         if (checkSelfPermission(
@@ -242,32 +253,49 @@ class MapFragment : Fragment(),
      * @should Place a marker for other user on the map
      */
     private fun retrieveOtherUsersLocationFromDB() {
-        try{
-            val users = AuthActivity.db.collection("users")
-            val userQuery = users
-                .whereNotEqualTo("uid", AuthActivity.userDbData!!.uid)
-                .get()
-            userQuery.addOnSuccessListener {
-                for (document in it) {
-                    if (document.get("isActive").toString().toBoolean()){
-                        val latitude = document.get("latitude").toString().toDouble()
-                        val longitude = document.get("longitude").toString().toDouble()
-                        val latLng = LatLng(latitude, longitude)
+        val userQuery = userCollectionRef
+            .whereNotEqualTo("uid", uid)
+            .get()
 
-                        val otherUser = UserProfileData(document.get("uid").toString())
-                        // Make sure the user is updated from the DB before displaying info about them
-                        otherUser.updateUserProfileFromDB(document)
-                        placeOtherMarkerOnMap(latLng, otherUser)
-                    }
+        userQuery.addOnSuccessListener {
+            for (document in it) {
+                val latitude = document.get("latitude").toString().toDouble()
+                val longitude = document.get("longitude").toString().toDouble()
+                val latLng = LatLng(latitude, longitude)
+
+                val otherUser = UserProfileData(document.get("uid").toString())
+                // Make sure the user is updated from the DB before displaying info about them
+                otherUser.updateUserProfileFromDB(document)
+                placeOtherMarkerOnMap(latLng, otherUser)
+
+                // Check if other user in 10 meters range
+
+                // ! Now we get 2 notifications because the `startLocationUpdate()` is called 2 times.
+                // TODO Call `startLocationUpdate()` once.
+
+                val metersOffset = 10.0
+                val latOffset: Double = MapUtils.metersToLat(metersOffset)
+                val longOffset: Double = MapUtils.metersToLong(metersOffset, currentLocation.latitude)
+                val othersAroundBounds = LatLngBounds(
+                    LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
+                    LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
+                )
+
+                val otherInBounds = othersAroundBounds.contains(latLng)
+                val otherAlreadyInBounds = othersInBoundsList.contains(otherUser.uid)
+
+                if (otherInBounds && !otherAlreadyInBounds) {
+                    val otherUserName = otherUser.name
+                    othersInBoundsList.add(otherUser.uid)
+                    notificationManager.show("You are being stalked", "$otherUserName is stalking you!")
+                } else if (!otherInBounds && otherAlreadyInBounds) {
+                    othersInBoundsList.remove(otherUser.uid)
                 }
             }
             userQuery.addOnFailureListener { exception ->
                 Log.w(ContentValues.TAG, "Error getting documents.", exception)
             }
-        } catch (e: NullPointerException){
-            Log.d(TAG, "Could not retrieve other user's location - $e")
         }
-
     }
 
     override fun onMarkerClick(p0: Marker) = false
@@ -300,6 +328,7 @@ class MapFragment : Fragment(),
 
     private fun startLocationUpdates() {
         Log.d(TAG, "startLocationUpdates")
+
         if (checkSelfPermission(requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
