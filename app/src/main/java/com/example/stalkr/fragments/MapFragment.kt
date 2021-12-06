@@ -299,6 +299,14 @@ class MapFragment : Fragment(),
     }
 
     override fun onMarkerClick(p0: Marker) = false
+//    override fun onMarkerClick(marker: Marker): Boolean {
+//            val polyline = mMap.addPolyline(
+//                PolylineOptions()
+//                    .clickable(false)
+//                    .add(LatLng(marker.position.latitude, marker.position.longitude))
+//            )
+//        return true
+//    }
 
     override fun onLocationChanged(location: Location) {
         Log.d(TAG, "onLocationChanged")
