@@ -217,6 +217,7 @@ class MapFragment : Fragment(),
             markerOptions.position(currentlatLng)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
             markerOptions.title(AuthUserObject.name) //AuthActivity.userData
+            markerOptions.snippet(AuthUserObject.pfpURL)
             userLocationMarker = mMap.addMarker(markerOptions)
             userLocationMarker!!.tag = markerOptions.title
         } else {
@@ -239,6 +240,7 @@ class MapFragment : Fragment(),
                 markerOptions.position(latLng)
                 markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
                 markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                markerOptions.snippet(userProfile.pfpURL)
                 markerOptions.title(userProfile.name)
 
                 val otherUserLocationMarker: Marker? = mMap.addMarker(markerOptions)

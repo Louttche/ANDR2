@@ -18,6 +18,7 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.storage.ktx.storage
 
 class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
     private lateinit var fragmentTransaction: FragmentTransaction
@@ -63,6 +64,7 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
                 // Update user object
                 AuthUserObject.uid = documents.first().data["uid"].toString()
                 AuthUserObject.name = documents.first().data["name"].toString()
+                AuthUserObject.pfpURL = documents.first().data["profileImageURL"].toString()
                 AuthUserObject.isActive = documents.first().data["isActive"].toString().toBoolean()
 
                 Log.d(TAG, AuthUserObject.uid);

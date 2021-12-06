@@ -12,6 +12,7 @@ object AuthUserObject {
     // Fields
     var uid: String = ""
     var name: String = ""
+    var pfpURL: String = ""
     var isActive: Boolean = false
     var groups: MutableList<GroupData>? = mutableListOf()
 
