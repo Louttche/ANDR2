@@ -26,4 +26,11 @@
     <string name="profile_photo_of_user">profile photo of user</string>
     <string name="bottom_wave_vector">bottom wave vector</string>
     <string name="top_wave_vector">top wave vector</string>
+    <string name="radius_10m">Radius (10m)</string>
+    <string name="sort">Sort</string>
+
+    <string-array name="filter_names">
+        <item>Sort by any</item>
+        <item>Sort by radius (1000m)</item>
+    </string-array>
 </resources>

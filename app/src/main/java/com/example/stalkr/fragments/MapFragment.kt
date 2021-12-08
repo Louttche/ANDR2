@@ -11,10 +11,11 @@ import android.location.Location
 import android.location.LocationListener
 import android.os.Bundle
 import android.util.Log
+import android.view.*
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
+import android.widget.Spinner
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.example.stalkr.data.UserProfileData
 
@@ -48,6 +49,7 @@ class MapFragment : Fragment(),
 
     // AUTH + DB
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
+
     // temp - for debug
     private var userName: String = ""
     private var uid: String = Firebase.auth.currentUser!!.uid
@@ -60,7 +62,8 @@ class MapFragment : Fragment(),
     // LOCATION
     private lateinit var currentLocation: Location
     private var locationUpdateState = false
-    private var userPositionViewport : LatLngBounds = LatLngBounds(LatLng(0.0,0.0), LatLng(0.0,0.0))
+    private var userPositionViewport: LatLngBounds =
+        LatLngBounds(LatLng(0.0, 0.0), LatLng(0.0, 0.0))
     private var changeBounds: Boolean = true
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private lateinit var locationCallback: LocationCallback
@@ -68,14 +71,22 @@ class MapFragment : Fragment(),
 
     // Google Markers
     private var userLocationMarker: Marker? = null
-    private var otherUserProfileLocationMarkers: Map<UserProfileData, Marker>? = null
+    private var otherUserProfileLocationMarkers: HashMap<UserProfileData, Marker>? = null
 
     private val othersInBoundsList: ArrayList<String> = arrayListOf()
     private lateinit var notificationManager: NotificationManager
 
-    companion object{
+    // Filter
+    private var isFilteredByRadius = false
+
+    companion object {
         private const val LOCATION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        setHasOptionsMenu(true)
+        super.onCreate(savedInstanceState)
     }
 
     override fun onCreateView(
@@ -95,7 +106,7 @@ class MapFragment : Fragment(),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        mapView = _binding!!.mapView;
+        mapView = _binding!!.mapView
         mapView!!.onCreate(savedInstanceState)
 
         notificationManager = NotificationManager(requireContext())
@@ -107,15 +118,19 @@ class MapFragment : Fragment(),
             ) != PackageManager.PERMISSION_GRANTED && checkSelfPermission(
                 requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED){
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
             // if permissions not granted, request them
             requestPermissions(
-                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION),
-                LOCATION_REQUEST_CODE)
-        } else{
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                ),
+                LOCATION_REQUEST_CODE
+            )
+        } else {
             setupLocationCallback()
-            mapView!!.getMapAsync(this);
+            mapView!!.getMapAsync(this)
             createLocationRequest()
         }
     }
@@ -136,8 +151,41 @@ class MapFragment : Fragment(),
         setupMap()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
+        Log.d("Debug", "Init menu ")
+        inflater.inflate(R.menu.menu_sorting_actions, menu)
+        val menuItem = menu.findItem(R.id.sortingSpinner)
+        val spinner = menuItem?.actionView as Spinner
+        val adapter = ArrayAdapter(
+            this.requireContext(),
+            android.R.layout.simple_list_item_1,
+            resources.getStringArray(R.array.filter_names)
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinner.adapter = adapter
+
+        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+            }
+
+            override fun onItemSelected(
+                parent: AdapterView<*>?,
+                view: View?,
+                position: Int,
+                id: Long
+            ) {
+                if (position == 0) {
+                    isFilteredByRadius = false
+                } else if (position == 1) {
+                    isFilteredByRadius = true
+                }
+            }
+        }
+        super.onCreateOptionsMenu(menu, inflater)
+    }
+
     private fun setupMap() {
-        Log.d(TAG,"setupMap")
+        Log.d(TAG, "setupMap")
         // Check permissions for fusedLocationClient listener
         if (checkSelfPermission(
                 requireContext(),
@@ -149,31 +197,38 @@ class MapFragment : Fragment(),
         ) {
             mapView!!.onResume()
             fusedLocationClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
-                if (location != null){
+                if (location != null) {
                     placeMarkerOnMap(location)
                     currentLocation = location
-                    moveCamera(currentLocation);
+                    moveCamera(currentLocation)
                 }
             }
         }
     }
 
-    fun setupLocationViewport(){
-        if (changeBounds){
+    fun setupLocationViewport() {
+        if (changeBounds) {
             // if marker goes beyond the view bounds, center the camera on user
-            var meters_offset : Double = 30.0
-            var latOffset : Double = MapUtils.metersToLat(meters_offset) // y
-            var longOffset : Double = MapUtils.metersToLong(meters_offset, currentLocation.latitude) // x
+            var meters_offset: Double = 30.0
+            var latOffset: Double = MapUtils.metersToLat(meters_offset) // y
+            var longOffset: Double =
+                MapUtils.metersToLong(meters_offset, currentLocation.latitude) // x
 
             userPositionViewport = LatLngBounds(
-                LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
-                LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
+                LatLng(
+                    currentLocation.latitude - latOffset,
+                    currentLocation.longitude - longOffset
+                ),  // SW corner
+                LatLng(
+                    currentLocation.latitude + latOffset,
+                    currentLocation.longitude + longOffset
+                ) // NE corner
             )
             changeBounds = false
         }
 
         val currentlatLng = LatLng(currentLocation.latitude, currentLocation.longitude)
-        if (!userPositionViewport.contains(currentlatLng)){
+        if (!userPositionViewport.contains(currentlatLng)) {
             changeBounds = true
             moveCamera(currentLocation)
         }
@@ -230,9 +285,9 @@ class MapFragment : Fragment(),
      * @should Set the user profile photo to default if is empty or null
      */
     private fun placeOtherMarkerOnMap(latLng: LatLng, userProfile: UserProfileData) {
-        if (otherUserProfileLocationMarkers != null){
+        if (otherUserProfileLocationMarkers != null) {
             // if the user already has a marker, just update position
-            if (otherUserProfileLocationMarkers!!.any{it.key == userProfile}){
+            if (otherUserProfileLocationMarkers!!.any { it.key == userProfile }) {
                 // TODO: old user marker stays where it is
                 otherUserProfileLocationMarkers!![userProfile]!!.position = latLng
             } else {
@@ -244,10 +299,12 @@ class MapFragment : Fragment(),
                 markerOptions.title(userProfile.name)
 
                 val otherUserLocationMarker: Marker? = mMap.addMarker(markerOptions)
-                otherUserProfileLocationMarkers!!.toMutableMap().putIfAbsent(userProfile, otherUserLocationMarker!!)
+                if (otherUserLocationMarker != null) {
+                    otherUserProfileLocationMarkers!!.putIfAbsent(userProfile, otherUserLocationMarker)
+                }
             }
-        } else{
-            otherUserProfileLocationMarkers = mutableMapOf()
+        } else {
+            otherUserProfileLocationMarkers = HashMap()
         }
     }
 
@@ -269,35 +326,23 @@ class MapFragment : Fragment(),
                 // Make sure the user is updated from the DB before displaying info about them
                 otherUser.updateUserProfileFromDB(document)
                 placeOtherMarkerOnMap(latLng, otherUser)
-
                 // Check if other user in 10 meters range
 
                 // ! Now we get 2 notifications because the `startLocationUpdate()` is called 2 times.
                 // TODO Call `startLocationUpdate()` once.
 
-                val metersOffset = 10.0
-                val latOffset: Double = MapUtils.metersToLat(metersOffset)
-                val longOffset: Double = MapUtils.metersToLong(metersOffset, currentLocation.latitude)
-                val othersAroundBounds = LatLngBounds(
-                    LatLng(currentLocation.latitude - latOffset, currentLocation.longitude - longOffset),  // SW corner
-                    LatLng(currentLocation.latitude + latOffset, currentLocation.longitude + longOffset) // NE corner
-                )
+                // Shows notification when users are within the radius of 10m
+                checkForStalkers(otherUser, latLng)
 
-                val otherInBounds = othersAroundBounds.contains(latLng)
-                val otherAlreadyInBounds = othersInBoundsList.contains(otherUser.uid)
-
-                if (otherInBounds && !otherAlreadyInBounds) {
-                    val otherUserName = otherUser.name
-                    othersInBoundsList.add(otherUser.uid)
-                    notificationManager.show("You are being stalked", "$otherUserName is stalking you!")
-                } else if (!otherInBounds && otherAlreadyInBounds) {
-                    othersInBoundsList.remove(otherUser.uid)
-                }
             }
             userQuery.addOnFailureListener { exception ->
                 Log.w(ContentValues.TAG, "Error getting documents.", exception)
             }
+            // Filter user markers by radius of 1000m
+            filterOtherMarkersByRadius(1000.0)
         }
+        // Filter user markers by radius of 1000m (seems to be quicker?)
+        filterOtherMarkersByRadius(1000.0)
     }
 
     override fun onMarkerClick(p0: Marker) = false
@@ -318,13 +363,65 @@ class MapFragment : Fragment(),
         AuthUserObject.updateUserLocationInDB(location)
     }
 
-    private fun setupLocationCallback(){
-        Log.d(TAG,"setupLocationCallback")
+    /**
+     * @should show notification if other users are within the radius of 10m
+     */
+    private fun checkForStalkers(otherUser: UserProfileData, latLng: LatLng) {
+        val otherInBounds = isOtherUserInBound(10.0, latLng)
+        val otherAlreadyInBounds = othersInBoundsList.contains(otherUser.uid)
+
+        if (otherInBounds && !otherAlreadyInBounds) {
+            val otherUserName = otherUser.name
+            othersInBoundsList.add(otherUser.uid)
+            notificationManager.show("You are being stalked", "$otherUserName is stalking you!")
+        } else if (!otherInBounds && otherAlreadyInBounds) {
+            othersInBoundsList.remove(otherUser.uid)
+        }
+    }
+
+    /**
+     * @should filter other user markers within a certain radius
+     */
+    private fun filterOtherMarkersByRadius(offsetInMeter: Double) {
+
+        otherUserProfileLocationMarkers?.forEach { (otherUser, marker) ->
+            val latLng = LatLng(marker.position.latitude, marker.position.longitude)
+            if (isFilteredByRadius) {
+                marker.isVisible = isOtherUserInBound(offsetInMeter, latLng)
+            }
+            else {
+                marker.isVisible = true
+            }
+        }
+    }
+
+    /**
+     * @should check if other user is within a certain radius
+     */
+    private fun isOtherUserInBound(offsetInMeter: Double, otherUserLatLng: LatLng): Boolean {
+        val latOffset: Double = MapUtils.metersToLat(offsetInMeter)
+        val longOffset: Double = MapUtils.metersToLong(offsetInMeter, currentLocation.latitude)
+        val othersAroundBounds = LatLngBounds(
+            LatLng(
+                currentLocation.latitude - latOffset,
+                currentLocation.longitude - longOffset
+            ),  // SW corner
+            LatLng(
+                currentLocation.latitude + latOffset,
+                currentLocation.longitude + longOffset
+            ) // NE corner
+        )
+
+        return othersAroundBounds.contains(otherUserLatLng)
+    }
+
+    private fun setupLocationCallback() {
+        Log.d(TAG, "setupLocationCallback")
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(p0: LocationResult) {
                 super.onLocationResult(p0)
-                Log.d(TAG,"onLocationResult")
+                Log.d(TAG, "onLocationResult")
 
                 currentLocation = p0.lastLocation
                 setupLocationViewport()
@@ -339,9 +436,16 @@ class MapFragment : Fragment(),
     private fun startLocationUpdates() {
         Log.d(TAG, "startLocationUpdates")
 
-        if (checkSelfPermission(requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-            fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
+        if (checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            fusedLocationClient.requestLocationUpdates(
+                locationRequest,
+                locationCallback,
+                null /* Looper */
+            )
         }
     }
 
@@ -368,8 +472,10 @@ class MapFragment : Fragment(),
                 try {
                     // Show the dialog by calling startResolutionForResult(),
                     // and check the result in onActivityResult().
-                    e.startResolutionForResult(requireActivity(),
-                        REQUEST_CHECK_SETTINGS)
+                    e.startResolutionForResult(
+                        requireActivity(),
+                        REQUEST_CHECK_SETTINGS
+                    )
                 } catch (sendEx: IntentSender.SendIntentException) {
                     // Ignore the error.
                 }
@@ -400,37 +506,46 @@ class MapFragment : Fragment(),
             if (checkSelfPermission(
                     binding.root.context,
                     Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED) {
-                fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, null /* Looper */)
+                ) == PackageManager.PERMISSION_GRANTED
+            ) {
+                fusedLocationClient.requestLocationUpdates(
+                    locationRequest,
+                    locationCallback,
+                    null /* Looper */
+                )
             }
         }
     }
 
     /* CAMERA STUFF */
 
-    private fun moveCamera(location: Location){
-        Log.d("camera", "in moveCamera");
+    private fun moveCamera(location: Location) {
+        Log.d("camera", "in moveCamera")
         val cameraPosition = CameraPosition.Builder()
             .target(LatLng(location.latitude, location.longitude))
             .zoom(16f)            // Sets the zoom
             .build()                    // Creates a CameraPosition from the builder
         mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition))
     }
+
     // when the camera starts moving.
     override fun onCameraMoveStarted(p0: Int) {
-        Log.d(ContentValues.TAG, "onCameraMoveStarted");
+        Log.d(ContentValues.TAG, "onCameraMoveStarted")
     }
+
     // while the camera is moving or the user is interacting with the touch screen.
     override fun onCameraMove() {
-        Log.d(ContentValues.TAG, "onCameraMove");
+        Log.d(ContentValues.TAG, "onCameraMove")
     }
+
     // when the current camera movement has been interrupted.
     override fun onCameraMoveCanceled() {
-        Log.d(ContentValues.TAG, "onCameraMoveCanceled");
+        Log.d(ContentValues.TAG, "onCameraMoveCanceled")
     }
+
     // when the camera stops moving and the user has stopped interacting with the map.
     override fun onCameraIdle() {
-        Log.d(ContentValues.TAG, "onCameraIdle");
+        Log.d(ContentValues.TAG, "onCameraIdle")
     }
 
     // -- //
