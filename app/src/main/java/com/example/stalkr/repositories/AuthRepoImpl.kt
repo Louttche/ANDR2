@@ -1,6 +1,5 @@
 package com.example.stalkr.repositories
 
-import android.util.Patterns.EMAIL_ADDRESS
 import com.example.stalkr.Verification
 import com.example.stalkr.enums.VerificationType
 import com.google.firebase.auth.ktx.auth
