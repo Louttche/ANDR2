@@ -2,6 +2,7 @@ package com.example.stalkr
 
 import android.Manifest
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.content.ContentValues
 import android.content.ContentValues.TAG
 import android.content.Intent
@@ -15,6 +16,7 @@ import android.view.*
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Spinner
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat.checkSelfPermission
 import com.example.stalkr.data.UserProfileData
@@ -36,6 +38,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.gms.maps.MapView
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import androidx.core.app.ActivityCompat.startActivityForResult
+
+
+
+
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
@@ -49,6 +57,7 @@ class MapFragment : Fragment(),
 
     // AUTH + DB
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
+    private val storageRef = FirebaseStorage.getInstance().reference
 
     // temp - for debug
     private var userName: String = ""
@@ -82,6 +91,7 @@ class MapFragment : Fragment(),
     companion object {
         private const val LOCATION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
+        private const val PICK_IMAGE_REQUEST = 22
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -96,8 +106,23 @@ class MapFragment : Fragment(),
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
+        // My location click handler
         binding.btnMyLocation.setOnClickListener {
             moveCamera(currentLocation)
+        }
+
+        // Picture upload click handler
+        binding.btnMyPicture.setOnClickListener {
+            val intent = Intent()
+            intent.type = "image/*"
+            intent.action = Intent.ACTION_GET_CONTENT
+            startActivityForResult(
+                Intent.createChooser(
+                    intent,
+                    "Select Image from here..."
+                ),
+                PICK_IMAGE_REQUEST
+            )
         }
 
         return binding.root
@@ -490,6 +515,19 @@ class MapFragment : Fragment(),
             if (resultCode == Activity.RESULT_OK) {
                 locationUpdateState = true
                 startLocationUpdates()
+            }
+        }
+
+        if (requestCode === PICK_IMAGE_REQUEST && resultCode === RESULT_OK && data != null && data.data != null) {
+
+            // Get the Uri of data
+            val filePath = data.data
+            if (filePath != null) {
+                val profileImagesRef = storageRef.child("profileImages/$uid")
+
+                profileImagesRef.putFile(filePath).addOnSuccessListener {
+                    Toast.makeText(requireContext(), "Image Uploaded!", Toast.LENGTH_SHORT).show()
+                }
             }
         }
     }
