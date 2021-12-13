@@ -2,14 +2,13 @@ package com.example.stalkr
 
 import android.Manifest
 import android.app.Activity
-import android.content.ContentValues
+import android.content.*
 import android.content.ContentValues.TAG
-import android.content.Intent
-import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import android.view.*
 import android.widget.AdapterView
@@ -20,6 +19,7 @@ import androidx.core.content.ContextCompat.checkSelfPermission
 import com.example.stalkr.data.UserProfileData
 
 import com.example.stalkr.databinding.FragmentMapBinding
+import com.example.stalkr.services.LocationService
 import com.example.stalkr.services.NotificationManager
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
@@ -65,9 +65,41 @@ class MapFragment : Fragment(),
     private var userPositionViewport: LatLngBounds =
         LatLngBounds(LatLng(0.0, 0.0), LatLng(0.0, 0.0))
     private var changeBounds: Boolean = true
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
-    private lateinit var locationRequest: LocationRequest
+
+    private lateinit var locationService: LocationService
+    private var bound: Boolean = false
+
+    private val connection = object : ServiceConnection {
+
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            val binder = service as LocationService.LocalBinder
+            locationService = binder.getService()
+            locationService.setupLocationService(requireContext(),
+                object : LocationCallback() {
+                    override fun onLocationResult(p0: LocationResult) {
+                        super.onLocationResult(p0)
+                        Log.d(TAG, "onLocationResult")
+
+                        currentLocation = p0.lastLocation
+                        setupLocationViewport()
+                        //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
+                        AuthUserObject.updateUserLocationInDB(currentLocation)
+                        placeMarkerOnMap(currentLocation)
+                        retrieveOtherUsersLocationFromDB()
+
+                        Log.d("here", "there")
+                    }
+                }
+            )
+            locationService.startLocationListener()
+            bound = true
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            bound = false
+        }
+    }
 
     // Google Markers
     private var userLocationMarker: Marker? = null
@@ -129,9 +161,9 @@ class MapFragment : Fragment(),
                 LOCATION_REQUEST_CODE
             )
         } else {
-            setupLocationCallback()
+//            setupLocationCallback()
             mapView!!.getMapAsync(this)
-            createLocationRequest()
+//            createLocationRequest()
         }
     }
 
@@ -148,6 +180,7 @@ class MapFragment : Fragment(),
         val customInfoWindow = CustomInfoWindowForGoogleMap(requireContext())
         mMap!!.setInfoWindowAdapter(customInfoWindow)
 
+        Log.d("seq", "setupMap")
         setupMap()
     }
 
@@ -196,7 +229,7 @@ class MapFragment : Fragment(),
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             mapView!!.onResume()
-            fusedLocationClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
+            locationService.lastLocation { location ->
                 if (location != null) {
                     placeMarkerOnMap(location)
                     currentLocation = location
@@ -245,9 +278,9 @@ class MapFragment : Fragment(),
             LOCATION_REQUEST_CODE -> {
                 if (grantResults.size > 0 && grantResults[0] === PackageManager.PERMISSION_GRANTED) {
                     // permission was granted by the user
-                    setupLocationCallback()
+//                    setupLocationCallback()
                     mapView!!.getMapAsync(this);
-                    createLocationRequest()
+//                    createLocationRequest()
                 } else {
                     // permission was denied by the user
                     // TODO: decide what to do when permission was denied
@@ -415,73 +448,73 @@ class MapFragment : Fragment(),
         return othersAroundBounds.contains(otherUserLatLng)
     }
 
-    private fun setupLocationCallback() {
-        Log.d(TAG, "setupLocationCallback")
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(p0: LocationResult) {
-                super.onLocationResult(p0)
-                Log.d(TAG, "onLocationResult")
+//    private fun setupLocationCallback() {
+//        Log.d(TAG, "setupLocationCallback")
+//        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
+//        locationCallback = object : LocationCallback() {
+//            override fun onLocationResult(p0: LocationResult) {
+//                super.onLocationResult(p0)
+//                Log.d(TAG, "onLocationResult")
+//
+//                currentLocation = p0.lastLocation
+//                setupLocationViewport()
+//                //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
+//                AuthUserObject.updateUserLocationInDB(currentLocation)
+//                placeMarkerOnMap(currentLocation)
+//                retrieveOtherUsersLocationFromDB()
+//            }
+//        }
+//    }
 
-                currentLocation = p0.lastLocation
-                setupLocationViewport()
-                //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
-                AuthUserObject.updateUserLocationInDB(currentLocation)
-                placeMarkerOnMap(currentLocation)
-                retrieveOtherUsersLocationFromDB()
-            }
-        }
-    }
+//    private fun startLocationUpdates() {
+//        Log.d(TAG, "startLocationUpdates")
+//
+//        if (checkSelfPermission(
+//                requireContext(),
+//                Manifest.permission.ACCESS_FINE_LOCATION
+//            ) == PackageManager.PERMISSION_GRANTED
+//        ) {
+//            fusedLocationClient.requestLocationUpdates(
+//                locationRequest,
+//                locationCallback,
+//                null /* Looper */
+//            )
+//        }
+//    }
 
-    private fun startLocationUpdates() {
-        Log.d(TAG, "startLocationUpdates")
-
-        if (checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                null /* Looper */
-            )
-        }
-    }
-
-    private fun createLocationRequest() {
-        locationRequest = LocationRequest()
-        locationRequest.interval = 5000
-        locationRequest.fastestInterval = 1000
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
-        val builder = LocationSettingsRequest.Builder()
-            .addLocationRequest(locationRequest)
-
-        val client = LocationServices.getSettingsClient(requireActivity())
-        val task = client.checkLocationSettings(builder.build())
-
-        task.addOnSuccessListener {
-            locationUpdateState = true
-            startLocationUpdates()
-        }
-        task.addOnFailureListener { e ->
-            if (e is ResolvableApiException) {
-                // Location settings are not satisfied, but this can be fixed
-                // by showing the user a dialog.
-                try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-                    e.startResolutionForResult(
-                        requireActivity(),
-                        REQUEST_CHECK_SETTINGS
-                    )
-                } catch (sendEx: IntentSender.SendIntentException) {
-                    // Ignore the error.
-                }
-            }
-        }
-    }
+//    private fun createLocationRequest() {
+//        locationRequest = LocationRequest()
+//        locationRequest.interval = 5000
+//        locationRequest.fastestInterval = 1000
+//        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+//
+//        val builder = LocationSettingsRequest.Builder()
+//            .addLocationRequest(locationRequest)
+//
+//        val client = LocationServices.getSettingsClient(requireActivity())
+//        val task = client.checkLocationSettings(builder.build())
+//
+//        task.addOnSuccessListener {
+//            locationUpdateState = true
+//            startLocationUpdates()
+//        }
+//        task.addOnFailureListener { e ->
+//            if (e is ResolvableApiException) {
+//                // Location settings are not satisfied, but this can be fixed
+//                // by showing the user a dialog.
+//                try {
+//                    // Show the dialog by calling startResolutionForResult(),
+//                    // and check the result in onActivityResult().
+//                    e.startResolutionForResult(
+//                        requireActivity(),
+//                        REQUEST_CHECK_SETTINGS
+//                    )
+//                } catch (sendEx: IntentSender.SendIntentException) {
+//                    // Ignore the error.
+//                }
+//            }
+//        }
+//    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "MainActivity - onActivityResult")
@@ -489,31 +522,21 @@ class MapFragment : Fragment(),
         if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
                 locationUpdateState = true
-                startLocationUpdates()
+//                startLocationUpdates()
             }
         }
     }
 
     override fun onPause() {
         super.onPause()
-        if (::fusedLocationClient.isInitialized)
-            fusedLocationClient.removeLocationUpdates(locationCallback)
+        activity?.unbindService(connection)
     }
 
     override fun onResume() {
         super.onResume()
-        if (!locationUpdateState) {
-            if (checkSelfPermission(
-                    binding.root.context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                fusedLocationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    null /* Looper */
-                )
-            }
+        Log.d("seq", "onResume")
+        Intent(requireContext(), LocationService::class.java).also { intent ->
+            activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
         }
     }
 
