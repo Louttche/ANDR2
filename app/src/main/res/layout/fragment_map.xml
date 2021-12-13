@@ -12,8 +12,8 @@
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:enabled="true"
         android:clickable="true"
+        android:enabled="true"
         tools:ignore="SpeakableTextPresentCheck" />
 
     <ImageButton
@@ -24,5 +24,15 @@
         android:contentDescription="@string/mylocationbutton"
         android:src="@android:drawable/ic_menu_mylocation"
         tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck" />
+
+    <ImageButton
+        android:id="@+id/btn_myPicture"
+        android:layout_width="58dp"
+        android:layout_height="53dp"
+        android:layout_gravity="end"
+        android:backgroundTint="#4C494E"
+        android:contentDescription="@string/profile_photo_of_user"
+        android:src="@drawable/ic_baseline_person_24"
+        tools:ignore="@string/profile_photo_of_user" />
 
 </FrameLayout>
