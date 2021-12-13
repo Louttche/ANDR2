@@ -39,10 +39,8 @@ import com.google.android.gms.maps.MapView
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import androidx.core.app.ActivityCompat.startActivityForResult
 
-
-
+import com.google.firebase.firestore.SetOptions
 
 
 class MapFragment : Fragment(),
@@ -320,12 +318,14 @@ class MapFragment : Fragment(),
                 markerOptions.position(latLng)
                 markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
                 markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                markerOptions.snippet(userProfile.pfpURL)
                 markerOptions.title(userProfile.name)
-
+                markerOptions.snippet(userProfile.pfpURL)
                 val otherUserLocationMarker: Marker? = mMap.addMarker(markerOptions)
                 if (otherUserLocationMarker != null) {
-                    otherUserProfileLocationMarkers!!.putIfAbsent(userProfile, otherUserLocationMarker)
+                    otherUserProfileLocationMarkers!!.putIfAbsent(
+                        userProfile,
+                        otherUserLocationMarker
+                    )
                 }
             }
         } else {
@@ -518,15 +518,33 @@ class MapFragment : Fragment(),
             }
         }
 
+        // Profile image upload
         if (requestCode === PICK_IMAGE_REQUEST && resultCode === RESULT_OK && data != null && data.data != null) {
-
             // Get the Uri of data
             val filePath = data.data
             if (filePath != null) {
-                val profileImagesRef = storageRef.child("profileImages/$uid")
+                val profileImageRef = storageRef.child("profileImages/$uid")
 
-                profileImagesRef.putFile(filePath).addOnSuccessListener {
-                    Toast.makeText(requireContext(), "Image Uploaded!", Toast.LENGTH_SHORT).show()
+                profileImageRef.putFile(filePath).addOnSuccessListener {
+                    profileImageRef.downloadUrl.addOnSuccessListener { uri ->
+                        val userProfileImageURL = hashMapOf(
+                            "profileImageURL" to uri.toString()
+                        )
+
+                        val userQuery = userCollectionRef
+                            .whereEqualTo("uid", this.uid)
+                            .get()
+                        userQuery.addOnSuccessListener {
+                            try {
+                                AuthUserObject.pfpURL = uri.toString()
+                                userCollectionRef.document(it.first().id).set(userProfileImageURL, SetOptions.merge())
+                            } catch (e: NoSuchElementException) {
+                                Log.d(TAG, "No such element - $e")
+                            }
+
+                            Toast.makeText(requireContext(), "Image Uploaded!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
                 }
             }
         }
