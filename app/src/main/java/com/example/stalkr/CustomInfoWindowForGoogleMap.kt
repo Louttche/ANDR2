@@ -12,6 +12,7 @@ import com.bumptech.glide.Glide
 import com.example.stalkr.data.InfoWindowData
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.ktx.storage
 
@@ -23,14 +24,17 @@ class CustomInfoWindowForGoogleMap(context: Context) : GoogleMap.InfoWindowAdapt
     override fun getInfoContents(marker: Marker): View {
         var mInfoView = (mContext as Activity).layoutInflater.inflate(R.layout.view_user_map_overlay, null)
         //var mInfoWindow: InfoWindowData? = marker?.tag as InfoWindowData?
+        var uid: String = Firebase.auth.currentUser!!.uid
 
         val tv_username : TextView = mInfoView.findViewById(R.id.tv_user_name)
         tv_username.text = marker.title
 
         // TODO: Display actual photo
 //        val httpsReference = storage.getReferenceFromUrl("https://firebasestorage.googleapis.com/v0/b/stalkr-9c07b.appspot.com/o/profileImages%2Fdiscord_avatar_xmas2.png?alt=media&token=6e71324d-ae7c-4493-972b-88c863f0c262")
-//        val urlImage = "https://firebasestorage.googleapis.com/v0/b/stalkr-9c07b.appspot.com/o/profileImages%2Fdiscord_avatar_xmas2.png?alt=media&token=6e71324d-ae7c-4493-972b-88c863f0c262"
-        val urlImage = marker.snippet
+        val urlImage = storageRef.child("profileImages/$uid").downloadUrl
+//        val urlImage = "https://firebasestorage.googleapis.com/v0/b/stalkr-9c07b.appspot.com/o/profileImages%2F$uid?alt=media&token=6e71324d-ae7c-4493-972b-88c863f0c262"
+//        val urlImage = marker.snippet
+
         val iv_photo : ImageView = mInfoView.findViewById(R.id.iv_user_photo)
 
             Glide.with(this.mContext)
