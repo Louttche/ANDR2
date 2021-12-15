@@ -15,10 +15,11 @@
     <string name="name_error">Please enter your name</string>
     <string name="error_invalid_password">Password must be at least 8 char, 1 letter, 1 number, 1 special char</string>
     <string name="password_error">Please enter your password</string>
-    <string name="confirmation_password_error">"Password does not match "</string>
+    <string name="confirmation_password_error">"Please enter the confirmation password "</string>
+    <string name="error_invalid_confirmation_password">"Password does not match "</string>
     <string name="logout">logout</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-    <string name="mylocationbutton">myLocationButton</string>
+    <string name="my_location_button">myLocationButton</string>
     <string name="title_activity_main" />
     <string name="invite">Invite</string>
     <string name="textview">TextView</string>
@@ -28,6 +29,10 @@
     <string name="top_wave_vector">top wave vector</string>
     <string name="radius_10m">Radius (10m)</string>
     <string name="sort">Sort</string>
+    <string name="not_available">NA</string>
+    <string name="stop_notifications">Stop Notifications</string>
+    <string name="compass_image_content_desc">Compass image</string>
+    <string name="direction_angle">Direction angle</string>
 
     <string-array name="filter_names">
         <item>Sort by any</item>

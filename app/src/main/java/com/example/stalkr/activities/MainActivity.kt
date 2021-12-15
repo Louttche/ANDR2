@@ -2,6 +2,7 @@ package com.example.stalkr
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -9,12 +10,19 @@ import android.os.Bundle
 import android.util.Log
 import android.content.ContentValues.TAG
 import android.content.Intent
+import android.content.IntentFilter
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.ImageView
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 
-import com.example.stalkr.databinding.ActivityMainBinding
+
 import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.stalkr.activities.AuthActivity
+import com.example.stalkr.databinding.ActivityMainBinding
+import com.example.stalkr.services.SensorService
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.ktx.Firebase
@@ -24,13 +32,33 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
+    private lateinit var broadcastReceiver: BroadcastReceiver
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        createNotificationChannel("Notification channel", "A channel for sending notifications");
+        createNotificationChannel("Notification channel", "A channel for sending notifications")
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val textViewDirection = findViewById<TextView>(R.id.textViewDirection)
+        val imageViewCompass = findViewById<ImageView>(R.id.imageViewCompass)
+
+        broadcastReceiver = object: BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val direction = intent.getStringExtra(SensorService.KEY_DIRECTION)
+                val angle = intent.getDoubleExtra(SensorService.KEY_ANGLE, 0.0)
+                val angleWithDirection = "$angle  $direction"
+                textViewDirection.text = angleWithDirection
+                imageViewCompass.rotation = angle.toFloat() * -1
+            }
+        }
+
+        LocalBroadcastManager.getInstance(this).registerReceiver(
+            broadcastReceiver,
+            IntentFilter(SensorService.KEY_ON_SENSOR_CHANGED_ACTION)
+        )
 
         // when app is initially opened the Map Fragment should be visible
         changeFragment(MapFragment())
@@ -99,4 +127,27 @@ class MainActivity : AppCompatActivity() {
             notificationManager.createNotificationChannel(channel)
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        startForegroundServiceForSensors(false)
+
+    }
+
+    override fun onPause() {
+        super.onPause()
+        startForegroundServiceForSensors(true)
+    }
+
+    override fun onDestroy() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
+        super.onDestroy()
+    }
+
+    private fun startForegroundServiceForSensors(background: Boolean) {
+        val intent = Intent(this, SensorService::class.java)
+        intent.putExtra(SensorService.KEY_BACKGROUND, background)
+        ContextCompat.startForegroundService(this, intent)
+    }
+
 }
