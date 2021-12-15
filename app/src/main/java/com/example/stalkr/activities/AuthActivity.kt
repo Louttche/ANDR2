@@ -18,7 +18,6 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.firestore.SetOptions
-import com.google.firebase.storage.ktx.storage
 
 class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
     private lateinit var fragmentTransaction: FragmentTransaction
@@ -67,7 +66,7 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
                 AuthUserObject.pfpURL = documents.first().data["profileImageURL"].toString()
                 AuthUserObject.isActive = documents.first().data["isActive"].toString().toBoolean()
 
-                Log.d(TAG, AuthUserObject.uid);
+                Log.d(TAG, AuthUserObject.uid)
             }
             .addOnFailureListener { exception ->
                 Log.w(ContentValues.TAG, "Error getting documents: ", exception)

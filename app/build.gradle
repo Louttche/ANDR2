@@ -15,7 +15,7 @@ android {
         versionName "1.0"
 
         testApplicationId "com.example.stalkr.tests"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
@@ -72,54 +72,76 @@ dependencies {
     implementation 'androidx.navigation:navigation-fragment-ktx:2.3.5'
     implementation 'androidx.navigation:navigation-ui-ktx:2.3.5'
 
-    implementation 'androidx.test.ext:junit-ktx:1.1.3'
+//    implementation 'androidx.test.ext:junit-ktx:1.1.3'
 
     implementation 'com.github.bumptech.glide:glide:4.11.0'
+//    implementation 'androidx.test.ext:junit-ktx:1.1.3'
 
 // (Dimitar) This causes an error for some reason. I've commented it out.
 //    ebugImplementation("androidx.fragment:fragment-testing:1.4.0")
 
     testImplementation 'junit:junit:4.13.2'
-    testImplementation 'androidx.test:core:1.4.0'
-    androidTestImplementation('androidx.test:runner:1.4.0')
-    androidTestImplementation('androidx.test:rules:1.4.0')
+//    testImplementation 'androidx.test:core:1.4.0'
+//    androidTestImplementation('androidx.test:runner:1.4.0')
+//    androidTestImplementation('androidx.test:rules:1.4.0')
 
     // Optional -- Hamcrest library
-    androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
-    // Optional -- Robolectric environment
-    testImplementation "org.robolectric:robolectric:4.2.1"
-    // Optional -- Mockito framework
-    testImplementation("org.mockito:mockito-core:1.10.19")
-    androidTestImplementation("org.mockito:mockito-core:1.10.19")
-    // Optional -- Truth
+//    androidTestImplementation("org.hamcrest:hamcrest-library:1.3")
+//    // Optional -- Robolectric environment
+//    testImplementation "org.robolectric:robolectric:4.2.1"
+//    // Optional -- Mockito framework
+//    testImplementation("org.mockito:mockito-core:1.10.19")
+//    androidTestImplementation("org.mockito:mockito-core:1.10.19")
+//    // Optional -- Truth
     testImplementation 'com.google.truth:truth:1.0.1'
     androidTestImplementation 'com.google.truth:truth:1.0.1'
 
+    // Espresso/UI testing
+//    androidTestImplementation('androidx.test.espresso:espresso-intents:3.4.0')
+//    androidTestImplementation('androidx.test.ext:junit:1.1.3')
+//    androidTestImplementation('androidx.test.espresso:espresso-core:3.4.0')
 
-    androidTestImplementation 'androidx.test.ext:junit:1.1.3'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
-    androidTestImplementation('androidx.test.espresso:espresso-intents:3.4.0')
+//    androidTestImplementation('androidx.test:runner:1.4.0')
+//    androidTestImplementation('androidx.test.espresso:espresso-core:3.4.0')
     // Barista espresso extension
     androidTestImplementation('com.adevinta.android:barista:4.2.0') {
         exclude group: 'org.jetbrains.kotlin' // Only if you already use Kotlin in your project
         exclude module: "protobuf-lite"
     }
 
+//    testImplementation "androidx.arch.core:core-testing:2.1.0"
+//    androidTestImplementation "androidx.arch.core:core-testing:2.1.0"
+//    androidTestImplementation "androidx.arch.core:core-testing:2.1.0"
 
-    testImplementation "androidx.arch.core:core-testing:2.1.0"
-    androidTestImplementation "androidx.arch.core:core-testing:2.1.0"
-
-    // Coroutines Testing
-    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0-RC'
-
-    // Feature module Support
-    implementation("androidx.navigation:navigation-dynamic-features-fragment:2.3.5")
-    // Testing Navigation
-    androidTestImplementation("androidx.navigation:navigation-testing:2.3.5")
+//    // Coroutines Testing
+//    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.0-RC'
+//
+//    // Feature module Support
+//    implementation("androidx.navigation:navigation-dynamic-features-fragment:2.3.5")
+//    // Testing Navigation
+//    androidTestImplementation("androidx.navigation:navigation-testing:2.3.5")
     // Jetpack Compose Integration
-    implementation("androidx.navigation:navigation-compose:2.4.0-beta02")
+//    implementation("androidx.navigation:navigation-compose:2.4.0-beta02")
 
     // Test with JUnit5
     // Aggregator dependency on JUnit api, engine, and params
     testImplementation "org.junit.jupiter:junit-jupiter:5.7.1"
+
+
+    // Espresso
+    def androidx_test_espresso = "3.1.0"
+    androidTestImplementation "androidx.test.espresso:espresso-core:$androidx_test_espresso"
+    androidTestImplementation "androidx.test.espresso:espresso-contrib:$androidx_test_espresso"
+    implementation "androidx.test.espresso:espresso-idling-resource:$androidx_test_espresso"
+
+
+    // androidx.test
+    def androidx_test = "1.1.0"
+    androidTestImplementation "androidx.test:runner:$androidx_test"
+    androidTestImplementation "androidx.test:core:$androidx_test"
+    androidTestImplementation "androidx.test.ext:junit-ktx:$androidx_test"
+
+    // androidx.fragment
+    def fragment_version = "1.4.0"
+    debugImplementation("androidx.fragment:fragment-testing:$fragment_version")
 }
