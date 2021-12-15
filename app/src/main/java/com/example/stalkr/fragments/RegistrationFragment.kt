@@ -160,13 +160,13 @@ class RegistrationFragment : Fragment() {
         // Check if password is empty or invalid
         if (textInputEditTextConfirmationPassword.text.toString().isEmpty()) {
             isValid = false
-            textInputLayoutConfirmationPassword.error = resources.getString(R.string.password_error)
+            textInputLayoutConfirmationPassword.error = resources.getString(R.string.confirmation_password_error)
         }
         // Confirmation password must match password
         else if (textInputEditTextPassword.text.toString() != textInputEditTextConfirmationPassword.text.toString()) {
             isValid = false
             textInputLayoutConfirmationPassword.error =
-                resources.getString(R.string.confirmation_password_error)
+                resources.getString(R.string.error_invalid_confirmation_password)
         } else {
             textInputLayoutConfirmationPassword.isErrorEnabled = false
         }
