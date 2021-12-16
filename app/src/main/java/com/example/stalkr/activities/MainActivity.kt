@@ -14,7 +14,10 @@ import android.view.MenuItem
 
 import com.example.stalkr.databinding.ActivityMainBinding
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import com.example.stalkr.activities.AuthActivity
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.ktx.Firebase
@@ -31,6 +34,15 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        /*
+        val navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navController = navHostFragment.navController
+
+        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottomNavBar)
+        bottomNavigationView.setupWithNavController(navController)
+        */
 
         // when app is initially opened the Map Fragment should be visible
         changeFragment(MapFragment())

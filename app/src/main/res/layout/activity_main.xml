@@ -11,14 +11,13 @@
         android:id="@+id/fragmentContainerView_main"
         android:name="com.example.stalkr.MapFragment"
         android:layout_width="match_parent"
-        android:layout_height="500dp"
-        android:layout_gravity="fill_horizontal|top" />
+        android:layout_height="513dp" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNavBar"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:layout_gravity="center|bottom">
-
+        android:layout_gravity="center|bottom"
+        app:menu="@menu/menu_bottomnav">
     </com.google.android.material.bottomnavigation.BottomNavigationView>
 </FrameLayout>

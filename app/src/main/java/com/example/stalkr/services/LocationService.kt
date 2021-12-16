@@ -3,6 +3,8 @@ package com.example.stalkr.services
 import android.Manifest
 import android.app.Activity
 import android.app.Service
+import android.content.ComponentName
+import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -10,6 +12,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Binder
 import android.os.IBinder
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.FragmentActivity
@@ -33,16 +36,22 @@ class LocationService: Service() {
         fun getService(): LocationService = this@LocationService
     }
 
-    public fun setupLocationService(context: Context, locationCallback: LocationCallback) {
+    override fun startService(service: Intent?): ComponentName? {
+        return super.startService(service)
+    }
+
+    fun setupLocationService(context: Context, locationCallback: LocationCallback) {
+        Log.d(TAG,"on setupLocationService");
         this.context = context
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
         this.locationCallback = locationCallback
 
-        createLocationRequest()
+        //createLocationRequest() // do this after mapAsync
     }
 
-    public fun startLocationListener() {
+    private fun startLocationListener() {
+        Log.d(TAG,"on startLocationListener");
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -56,7 +65,8 @@ class LocationService: Service() {
         }
     }
 
-    public fun lastLocation(callback: (location: Location) -> Unit) {
+    fun lastLocation(callback: (location: Location) -> Unit) {
+        Log.d(TAG,"on lastLocation");
         if (checkSelfPermission(
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
@@ -69,7 +79,8 @@ class LocationService: Service() {
         }
     }
 
-    private fun createLocationRequest() {
+    fun createLocationRequest() {
+        Log.d(TAG,"on createLocationRequest");
         locationRequest = LocationRequest()
         locationRequest.interval = 5000
         locationRequest.fastestInterval = 1000
@@ -81,6 +92,9 @@ class LocationService: Service() {
         val client = LocationServices.getSettingsClient(context)
         val task = client.checkLocationSettings(builder.build())
 
+        task.addOnSuccessListener {
+            startLocationListener()
+        }
         task.addOnFailureListener { e ->
             if (e is ResolvableApiException) {
                 // Location settings are not satisfied, but this can be fixed
@@ -100,6 +114,12 @@ class LocationService: Service() {
     }
 
     override fun onBind(intent: Intent?): IBinder? {
+        Log.d(TAG,"on LocationService onBind");
         return binder
+    }
+
+    override fun onUnbind(intent: Intent?): Boolean {
+        return super.onUnbind(intent)
+        Log.d(TAG,"on LocationService onUnbind");
     }
 }

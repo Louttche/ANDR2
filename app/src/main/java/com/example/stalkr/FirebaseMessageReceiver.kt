@@ -3,10 +3,8 @@ package com.example.stalkr
 import android.util.Log
 import com.example.stalkr.services.NotificationManager
 
-
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
-
 
 class FirebaseMessageReceiver : FirebaseMessagingService() {
     private val notificationManager: NotificationManager =
