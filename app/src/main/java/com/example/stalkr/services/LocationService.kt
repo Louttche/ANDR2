@@ -121,7 +121,7 @@ class LocationService: Service() {
 
     override fun onUnbind(intent: Intent?): Boolean {
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        return super.onUnbind(intent)
         Log.d(TAG,"on LocationService onUnbind");
+        return super.onUnbind(intent)
     }
 }

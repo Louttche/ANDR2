@@ -539,6 +539,8 @@ class MapFragment : Fragment(),
         super.onPause()
         if (bound){
             activity?.unbindService(connection)
+            bound = false
+            locationInitiated = false
         }
         mapView!!.onPause()
     }
