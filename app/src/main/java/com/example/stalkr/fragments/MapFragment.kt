@@ -3,45 +3,42 @@ package com.example.stalkr
 import android.Manifest
 import android.app.Activity
 import android.app.Activity.RESULT_OK
-import android.content.ContentValues
+import android.content.*
 import android.content.ContentValues.TAG
-import android.content.Intent
-import android.content.IntentSender
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.os.Bundle
+import android.os.IBinder
 import android.util.Log
 import android.view.*
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
-import android.widget.Toast
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.example.stalkr.activities.AuthActivity
 import com.example.stalkr.data.UserProfileData
 
 import com.example.stalkr.databinding.FragmentMapBinding
+import com.example.stalkr.services.LocationService
 import com.example.stalkr.services.NotificationManager
+import com.example.stalkr.services.SensorService
+import com.example.stalkr.utils.MapUtils
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 
-import com.google.android.gms.location.*
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.gms.maps.MapView
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 
 import com.google.firebase.firestore.SetOptions
-
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
@@ -58,23 +55,41 @@ class MapFragment : Fragment(),
     private val storageRef = FirebaseStorage.getInstance().reference
 
     // temp - for debug
-    private var userName: String = ""
     private var uid: String = Firebase.auth.currentUser!!.uid
     //private val currentUser get() = AuthActivity.userData
-
     // MAP
     private var mapView: MapView? = null
     private lateinit var mMap: GoogleMap
 
     // LOCATION
     private lateinit var currentLocation: Location
-    private var locationUpdateState = false
     private var userPositionViewport: LatLngBounds =
         LatLngBounds(LatLng(0.0, 0.0), LatLng(0.0, 0.0))
     private var changeBounds: Boolean = true
-    private lateinit var fusedLocationClient: FusedLocationProviderClient
-    private lateinit var locationCallback: LocationCallback
-    private lateinit var locationRequest: LocationRequest
+
+    private lateinit var locationService: LocationService
+    private var bound: Boolean = false
+    private var locationInitiated: Boolean = false
+
+    private val connection = object : ServiceConnection {
+
+        override fun onServiceConnected(className: ComponentName, service: IBinder) {
+            Log.d(TAG, "onServiceConnected - Location")
+            // We've bound to LocalService, cast the IBinder and get LocalService instance
+            val binder = service as LocationService.LocalBinder
+            locationService = binder.getService()
+            bound = true
+
+            if (!locationInitiated)
+                initLocationService()
+        }
+
+        override fun onServiceDisconnected(arg0: ComponentName) {
+            Log.d(TAG, "onServiceDisconnected - Location")
+            bound = false
+            locationInitiated = false
+        }
+    }
 
     // Google Markers
     private var userLocationMarker: Marker? = null
@@ -85,6 +100,8 @@ class MapFragment : Fragment(),
 
     // Filter
     private var isFilteredByRadius = false
+
+    private lateinit var broadcastReceiver: BroadcastReceiver
 
     companion object {
         private const val LOCATION_REQUEST_CODE = 1
@@ -101,12 +118,15 @@ class MapFragment : Fragment(),
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d(TAG, "onCreateView - MapFragment");
+
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
         // My location click handler
         binding.btnMyLocation.setOnClickListener {
-            moveCamera(currentLocation)
+            if (currentLocation != null)
+                moveCamera(currentLocation)
         }
 
         // Picture upload click handler
@@ -128,9 +148,28 @@ class MapFragment : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated - MapFragment");
 
         mapView = _binding!!.mapView
         mapView!!.onCreate(savedInstanceState)
+
+        val textViewDirection = view.findViewById<TextView>(R.id.textViewDirection)
+        val imageViewCompass = view.findViewById<ImageView>(R.id.imageViewCompass)
+
+        broadcastReceiver = object: BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val direction = intent.getStringExtra(SensorService.KEY_DIRECTION)
+                val angle = intent.getDoubleExtra(SensorService.KEY_ANGLE, 0.0)
+                val angleWithDirection = "$angle  $direction"
+                textViewDirection.text = angleWithDirection
+                imageViewCompass.rotation = angle.toFloat() * -1
+            }
+        }
+
+        LocalBroadcastManager.getInstance(this.requireContext()).registerReceiver(
+            broadcastReceiver,
+            IntentFilter(SensorService.KEY_ON_SENSOR_CHANGED_ACTION)
+        )
 
         notificationManager = NotificationManager(requireContext())
 
@@ -152,15 +191,48 @@ class MapFragment : Fragment(),
                 LOCATION_REQUEST_CODE
             )
         } else {
-            setupLocationCallback()
-            mapView!!.getMapAsync(this)
-            createLocationRequest()
+            boundLocationService()
+        }
+    }
+
+    private fun initLocationService(){
+        Log.d(TAG, "on initLocationService")
+
+        // Setup Location Callback
+        locationService.setupLocationService(requireContext(),
+            object : LocationCallback() {
+                override fun onLocationResult(p0: LocationResult) {
+                    super.onLocationResult(p0)
+                    Log.d(TAG, "onLocationResult")
+
+                    currentLocation = p0.lastLocation
+                    setupLocationViewport()
+                    //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
+                    AuthUserObject.updateUserLocationInDB(currentLocation)
+                    placeMarkerOnMap(currentLocation)
+                    retrieveOtherUsersLocationFromDB()
+                }
+            }
+        )
+
+        mapView!!.getMapAsync(this);
+        locationService.createLocationRequest(); // will start locationListener too
+
+        locationInitiated = true
+    }
+
+    private fun boundLocationService(){
+        if (!bound){
+            Log.d("seq", "Bounding to services...")
+            Intent(requireContext(), LocationService::class.java).also { intent ->
+                activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            }
         }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
-        mMap.uiSettings.isZoomControlsEnabled = true // not working with mapview for some reason
+        mMap.uiSettings.isZoomControlsEnabled = true
         mMap.setOnMarkerClickListener(this)
         mMap.setOnCameraIdleListener(this)
         mMap.setOnCameraMoveStartedListener(this)
@@ -172,6 +244,26 @@ class MapFragment : Fragment(),
         mMap!!.setInfoWindowAdapter(customInfoWindow)
 
         setupMap()
+    }
+
+    private fun setupMap() {
+        Log.d(TAG, "setupMap")
+        // Check permissions for fusedLocationClient listener
+        if (checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            mapView!!.onResume()
+            locationService.lastLocation { location ->
+                placeMarkerOnMap(location)
+                currentLocation = location
+                moveCamera(currentLocation)
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -205,28 +297,6 @@ class MapFragment : Fragment(),
             }
         }
         super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    private fun setupMap() {
-        Log.d(TAG, "setupMap")
-        // Check permissions for fusedLocationClient listener
-        if (checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            mapView!!.onResume()
-            fusedLocationClient.lastLocation.addOnSuccessListener(requireActivity()) { location ->
-                if (location != null) {
-                    placeMarkerOnMap(location)
-                    currentLocation = location
-                    moveCamera(currentLocation)
-                }
-            }
-        }
     }
 
     fun setupLocationViewport() {
@@ -268,13 +338,11 @@ class MapFragment : Fragment(),
             LOCATION_REQUEST_CODE -> {
                 if (grantResults.size > 0 && grantResults[0] === PackageManager.PERMISSION_GRANTED) {
                     // permission was granted by the user
-                    setupLocationCallback()
-                    mapView!!.getMapAsync(this);
-                    createLocationRequest()
+                    boundLocationService()
                 } else {
                     // permission was denied by the user
                     // TODO: decide what to do when permission was denied
-                    mapView!!.onStop()
+                    mapView!!.onPause()
                 }
                 return
             }
@@ -294,7 +362,7 @@ class MapFragment : Fragment(),
             val markerOptions = MarkerOptions()
             markerOptions.position(currentlatLng)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            markerOptions.title(AuthUserObject.name) //AuthActivity.userData
+            markerOptions.title(AuthUserObject.name)
             markerOptions.snippet(AuthUserObject.pfpURL)
             userLocationMarker = mMap.addMarker(markerOptions)
             userLocationMarker!!.tag = markerOptions.title
@@ -337,8 +405,8 @@ class MapFragment : Fragment(),
      * @should Place a marker for other user on the map
      */
     private fun retrieveOtherUsersLocationFromDB() {
-        val userQuery = userCollectionRef
-            .whereNotEqualTo("uid", uid)
+        val userQuery = AuthActivity.db.collection("users")
+            .whereNotEqualTo("uid", AuthUserObject.uid)
             .get()
 
         userQuery.addOnSuccessListener {
@@ -371,22 +439,6 @@ class MapFragment : Fragment(),
     }
 
     override fun onMarkerClick(p0: Marker) = false
-//    override fun onMarkerClick(marker: Marker): Boolean {
-//            val polyline = mMap.addPolyline(
-//                PolylineOptions()
-//                    .clickable(false)
-//                    .add(LatLng(marker.position.latitude, marker.position.longitude))
-//            )
-//        return true
-//    }
-
-    override fun onLocationChanged(location: Location) {
-        Log.d(TAG, "onLocationChanged")
-        // This really doesn't do anything, but I left it for testing purposes.
-        placeMarkerOnMap(location)
-        //saveLocationToDb(location)
-        AuthUserObject.updateUserLocationInDB(location)
-    }
 
     /**
      * @should show notification if other users are within the radius of 10m
@@ -440,81 +492,12 @@ class MapFragment : Fragment(),
         return othersAroundBounds.contains(otherUserLatLng)
     }
 
-    private fun setupLocationCallback() {
-        Log.d(TAG, "setupLocationCallback")
-        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireContext())
-        locationCallback = object : LocationCallback() {
-            override fun onLocationResult(p0: LocationResult) {
-                super.onLocationResult(p0)
-                Log.d(TAG, "onLocationResult")
-
-                currentLocation = p0.lastLocation
-                setupLocationViewport()
-                //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
-                AuthUserObject.updateUserLocationInDB(currentLocation)
-                placeMarkerOnMap(currentLocation)
-                retrieveOtherUsersLocationFromDB()
-            }
-        }
-    }
-
-    private fun startLocationUpdates() {
-        Log.d(TAG, "startLocationUpdates")
-
-        if (checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            fusedLocationClient.requestLocationUpdates(
-                locationRequest,
-                locationCallback,
-                null /* Looper */
-            )
-        }
-    }
-
-    private fun createLocationRequest() {
-        locationRequest = LocationRequest()
-        locationRequest.interval = 5000
-        locationRequest.fastestInterval = 1000
-        locationRequest.priority = LocationRequest.PRIORITY_HIGH_ACCURACY
-
-        val builder = LocationSettingsRequest.Builder()
-            .addLocationRequest(locationRequest)
-
-        val client = LocationServices.getSettingsClient(requireActivity())
-        val task = client.checkLocationSettings(builder.build())
-
-        task.addOnSuccessListener {
-            locationUpdateState = true
-            startLocationUpdates()
-        }
-        task.addOnFailureListener { e ->
-            if (e is ResolvableApiException) {
-                // Location settings are not satisfied, but this can be fixed
-                // by showing the user a dialog.
-                try {
-                    // Show the dialog by calling startResolutionForResult(),
-                    // and check the result in onActivityResult().
-                    e.startResolutionForResult(
-                        requireActivity(),
-                        REQUEST_CHECK_SETTINGS
-                    )
-                } catch (sendEx: IntentSender.SendIntentException) {
-                    // Ignore the error.
-                }
-            }
-        }
-    }
-
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         Log.d(TAG, "MainActivity - onActivityResult")
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
-                locationUpdateState = true
-                startLocationUpdates()
+                TODO("Not yet implemented")
             }
         }
 
@@ -552,25 +535,10 @@ class MapFragment : Fragment(),
 
     override fun onPause() {
         super.onPause()
-        if (::fusedLocationClient.isInitialized)
-            fusedLocationClient.removeLocationUpdates(locationCallback)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (!locationUpdateState) {
-            if (checkSelfPermission(
-                    binding.root.context,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) == PackageManager.PERMISSION_GRANTED
-            ) {
-                fusedLocationClient.requestLocationUpdates(
-                    locationRequest,
-                    locationCallback,
-                    null /* Looper */
-                )
-            }
+        if (bound){
+            activity?.unbindService(connection)
         }
+        mapView!!.onPause()
     }
 
     /* CAMERA STUFF */
@@ -604,10 +572,13 @@ class MapFragment : Fragment(),
         Log.d(ContentValues.TAG, "onCameraIdle")
     }
 
-    // -- //
-
     override fun onDestroyView() {
+        LocalBroadcastManager.getInstance(this.requireContext()).unregisterReceiver(broadcastReceiver)
         super.onDestroyView()
         _binding = null
+    }
+
+    override fun onLocationChanged(p0: Location) {
+        TODO("Not yet implemented")
     }
 }

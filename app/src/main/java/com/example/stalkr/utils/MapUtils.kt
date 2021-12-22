@@ -1,4 +1,4 @@
-package com.example.stalkr
+package com.example.stalkr.utils
 
 class MapUtils {
     companion object {

@@ -33,6 +33,19 @@
     <string name="stop_notifications">Stop Notifications</string>
     <string name="compass_image_content_desc">Compass image</string>
     <string name="direction_angle">Direction angle</string>
+    <string name="stalking_your_worst_nightmares_and_happiest_places_d">Stalking your worst nightmares and... happiest places :D</string>
+    <string name="message">Message</string>
+    <string name="add">Add</string>
+    <string name="stalk">Stalk</string>
+    <string name="bio">BIO</string>
+    <string name="username_profile">Name</string>
+    <string name="activity_profile">ACTIVITY</string>
+    <string name="user_photo">user_photo</string>
+    <string name="bio_title_account">BIO</string>
+    <string name="username_account">Name</string>
+    <string name="activity_account">ACTIVITY</string>
+    <string name="bio_content_account">Stalking your worst nightmares and... happiest places :D</string>
+    <string name="user_photo_account">user_photo_account</string>
 
     <string-array name="filter_names">
         <item>Sort by any</item>
