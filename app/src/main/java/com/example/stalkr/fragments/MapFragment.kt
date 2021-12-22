@@ -161,8 +161,6 @@ class MapFragment : Fragment(),
                     AuthUserObject.updateUserLocationInDB(currentLocation)
                     placeMarkerOnMap(currentLocation)
                     retrieveOtherUsersLocationFromDB()
-
-                    Log.d("here", "there")
                 }
             }
         )
