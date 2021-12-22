@@ -8,7 +8,7 @@ import com.google.rpc.context.AttributeContext
 
 // Common data for all users to be shown in UI
 @IgnoreExtraProperties
-data class UserProfileData (val uid: String, var name: String? = null, var pfpURL: String? = null) {
+data class UserProfileData (val uid: String, var name: String? = null, var pfpURL: String = "") {
 
     // Fields
     var isActive: Boolean = false

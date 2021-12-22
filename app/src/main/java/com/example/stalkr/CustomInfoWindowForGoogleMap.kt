@@ -10,6 +10,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.example.stalkr.data.InfoWindowData
+import com.example.stalkr.utils.ImageUtils
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.Marker
 import com.google.firebase.ktx.Firebase
@@ -27,15 +28,9 @@ class CustomInfoWindowForGoogleMap(context: Context) : GoogleMap.InfoWindowAdapt
         val tv_username : TextView = mInfoView.findViewById(R.id.tv_user_name)
         tv_username.text = marker.title
 
-        // TODO: Display actual photo
-//        val httpsReference = storage.getReferenceFromUrl("https://firebasestorage.googleapis.com/v0/b/stalkr-9c07b.appspot.com/o/profileImages%2Fdiscord_avatar_xmas2.png?alt=media&token=6e71324d-ae7c-4493-972b-88c863f0c262")
-//        val urlImage = "https://firebasestorage.googleapis.com/v0/b/stalkr-9c07b.appspot.com/o/profileImages%2Fdiscord_avatar_xmas2.png?alt=media&token=6e71324d-ae7c-4493-972b-88c863f0c262"
         val urlImage = marker.snippet
         val iv_photo : ImageView = mInfoView.findViewById(R.id.iv_user_photo)
-
-            Glide.with(this.mContext)
-                .load(urlImage)
-                .into(iv_photo)
+        ImageUtils.urlImageToImageView(urlImage!!, iv_photo, this.mContext)
 
         val btn_viewprofile : Button = mInfoView.findViewById(R.id.btn_view_profile)
         btn_viewprofile.setOnClickListener{

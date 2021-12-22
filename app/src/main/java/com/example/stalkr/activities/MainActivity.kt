@@ -17,10 +17,12 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 
-
 import androidx.fragment.app.Fragment
+import androidx.navigation.fragment.NavHostFragment
+import androidx.navigation.ui.setupWithNavController
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.stalkr.activities.AuthActivity
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.example.stalkr.databinding.ActivityMainBinding
 import com.example.stalkr.services.SensorService
 import com.google.firebase.auth.ktx.auth
@@ -42,6 +44,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        val navHostFragment: NavHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment? ?: return
+        val navController = navHostFragment.navController
+
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavBar)
+        bottomNav?.setupWithNavController(navController)
+
+        // transaction fragment change (not when using navhost)
+        //changeFragment(MapFragment())
         val textViewDirection = findViewById<TextView>(R.id.textViewDirection)
         val imageViewCompass = findViewById<ImageView>(R.id.imageViewCompass)
 
@@ -106,7 +117,8 @@ class MainActivity : AppCompatActivity() {
     // function to change the fragment which is used to reduce the lines of code
     private fun changeFragment(fragmentToChange: Fragment): Unit {
         supportFragmentManager.beginTransaction().apply {
-            replace(binding.fragmentContainerViewMain.id, fragmentToChange)
+            //replace(binding.fragmentContainerViewMain.id, fragmentToChange) // normal fragment container
+            replace(binding.navHostFragment.id, fragmentToChange) // navhost fragment container
             addToBackStack(null)
             commit()
         }
