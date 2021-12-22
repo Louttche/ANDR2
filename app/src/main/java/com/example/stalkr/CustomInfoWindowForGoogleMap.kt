@@ -32,8 +32,8 @@ class CustomInfoWindowForGoogleMap(context: Context) : GoogleMap.InfoWindowAdapt
         tv_username.text = marker.title
 
         val imageUrl = marker.snippet
+        val iv_photo : ImageView = mInfoView.findViewById(R.id.iv_user_photo)
         if (imageUrl !== "") {
-            val iv_photo : ImageView = mInfoView.findViewById(R.id.iv_user_photo)
             Glide.with(this.mContext)
                 .load(imageUrl)
                 .listener(MarkerCallback(marker))

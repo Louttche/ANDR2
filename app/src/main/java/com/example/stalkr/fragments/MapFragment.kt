@@ -80,8 +80,10 @@ class MapFragment : Fragment(),
             locationService = binder.getService()
             bound = true
 
-            if (!locationInitiated)
+            if (!locationInitiated) {
+                Log.d("GGGG", "HERE")
                 initLocationService()
+            }
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
@@ -539,6 +541,12 @@ class MapFragment : Fragment(),
             activity?.unbindService(connection)
         }
         mapView!!.onPause()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        boundLocationService()
+        mapView!!.onResume()
     }
 
     /* CAMERA STUFF */
