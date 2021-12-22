@@ -22,21 +22,16 @@ import com.example.stalkr.data.UserProfileData
 import com.example.stalkr.databinding.FragmentMapBinding
 import com.example.stalkr.services.LocationService
 import com.example.stalkr.services.NotificationManager
+import com.example.stalkr.utils.MapUtils
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
-import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.OnMapReadyCallback
 
-import com.google.android.gms.location.*
-import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
-import com.google.firebase.firestore.FirebaseFirestore
 import com.google.android.gms.maps.MapView
-import com.google.firebase.auth.ktx.auth
-import com.google.firebase.ktx.Firebase
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
@@ -47,11 +42,6 @@ class MapFragment : Fragment(),
 
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
-
-    // temp - for debug
-    private var userName: String = ""
-    private var uid: String = Firebase.auth.currentUser!!.uid
-    //private val currentUser get() = AuthActivity.userData
 
     // MAP
     private var mapView: MapView? = null
@@ -65,6 +55,7 @@ class MapFragment : Fragment(),
 
     private lateinit var locationService: LocationService
     private var bound: Boolean = false
+    private var locationInitiated: Boolean = false
 
     private val connection = object : ServiceConnection {
 
@@ -74,11 +65,15 @@ class MapFragment : Fragment(),
             val binder = service as LocationService.LocalBinder
             locationService = binder.getService()
             bound = true
+
+            if (!locationInitiated)
+                initLocationService()
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
             Log.d(TAG, "onServiceDisconnected - Location")
             bound = false
+            locationInitiated = false
         }
     }
 
@@ -106,11 +101,14 @@ class MapFragment : Fragment(),
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        Log.d(TAG, "onCreateView - MapFragment");
+
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
         binding.btnMyLocation.setOnClickListener {
-            moveCamera(currentLocation)
+            if (currentLocation != null)
+                moveCamera(currentLocation)
         }
 
         return binding.root
@@ -118,6 +116,7 @@ class MapFragment : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        Log.d(TAG, "onViewCreated - MapFragment");
 
         mapView = _binding!!.mapView
         mapView!!.onCreate(savedInstanceState)
@@ -142,34 +141,45 @@ class MapFragment : Fragment(),
                 LOCATION_REQUEST_CODE
             )
         } else {
-            if (bound)
-                initLocationService()
+            boundLocationService()
         }
     }
 
     private fun initLocationService(){
         Log.d(TAG, "on initLocationService")
+
         // Setup Location Callback
         locationService.setupLocationService(requireContext(),
-                object : LocationCallback() {
-                    override fun onLocationResult(p0: LocationResult) {
-                        super.onLocationResult(p0)
-                        Log.d(TAG, "onLocationResult")
+            object : LocationCallback() {
+                override fun onLocationResult(p0: LocationResult) {
+                    super.onLocationResult(p0)
+                    Log.d(TAG, "onLocationResult")
 
-                        currentLocation = p0.lastLocation
-                        setupLocationViewport()
-                        //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
-                        AuthUserObject.updateUserLocationInDB(currentLocation)
-                        placeMarkerOnMap(currentLocation)
-                        retrieveOtherUsersLocationFromDB()
+                    currentLocation = p0.lastLocation
+                    setupLocationViewport()
+                    //saveLocationToDb(currentLocation) // moved to AuthUserObject data class
+                    AuthUserObject.updateUserLocationInDB(currentLocation)
+                    placeMarkerOnMap(currentLocation)
+                    retrieveOtherUsersLocationFromDB()
 
-                        Log.d("here", "there")
-                    }
+                    Log.d("here", "there")
                 }
+            }
         )
 
         mapView!!.getMapAsync(this);
         locationService.createLocationRequest(); // will start locationListener too
+
+        locationInitiated = true
+    }
+
+    private fun boundLocationService(){
+        if (!bound){
+            Log.d("seq", "Bounding to services...")
+            Intent(requireContext(), LocationService::class.java).also { intent ->
+                activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+            }
+        }
     }
 
     override fun onMapReady(googleMap: GoogleMap) {
@@ -186,6 +196,26 @@ class MapFragment : Fragment(),
         mMap!!.setInfoWindowAdapter(customInfoWindow)
 
         setupMap()
+    }
+
+    private fun setupMap() {
+        Log.d(TAG, "setupMap")
+        // Check permissions for fusedLocationClient listener
+        if (checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
+                requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) == PackageManager.PERMISSION_GRANTED
+        ) {
+            mapView!!.onResume()
+            locationService.lastLocation { location ->
+                placeMarkerOnMap(location)
+                currentLocation = location
+                moveCamera(currentLocation)
+            }
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu, inflater: MenuInflater) {
@@ -219,28 +249,6 @@ class MapFragment : Fragment(),
             }
         }
         super.onCreateOptionsMenu(menu, inflater)
-    }
-
-    private fun setupMap() {
-        Log.d(TAG, "setupMap")
-        // Check permissions for fusedLocationClient listener
-        if (checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
-                requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) == PackageManager.PERMISSION_GRANTED
-        ) {
-            mapView!!.onResume()
-            locationService.lastLocation { location ->
-                if (location != null) {
-                    placeMarkerOnMap(location)
-                    currentLocation = location
-                    moveCamera(currentLocation)
-                }
-            }
-        }
     }
 
     fun setupLocationViewport() {
@@ -282,12 +290,11 @@ class MapFragment : Fragment(),
             LOCATION_REQUEST_CODE -> {
                 if (grantResults.size > 0 && grantResults[0] === PackageManager.PERMISSION_GRANTED) {
                     // permission was granted by the user
-                    if (bound)
-                        initLocationService()
+                    boundLocationService()
                 } else {
                     // permission was denied by the user
                     // TODO: decide what to do when permission was denied
-                    mapView!!.onStop()
+                    mapView!!.onPause()
                 }
                 return
             }
@@ -307,7 +314,7 @@ class MapFragment : Fragment(),
             val markerOptions = MarkerOptions()
             markerOptions.position(currentlatLng)
             markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
-            markerOptions.title(AuthUserObject.name) //AuthActivity.userData
+            markerOptions.title(AuthUserObject.name)
             markerOptions.snippet(AuthUserObject.pfpURL)
             userLocationMarker = mMap.addMarker(markerOptions)
             userLocationMarker!!.tag = markerOptions.title
@@ -316,6 +323,7 @@ class MapFragment : Fragment(),
             userLocationMarker!!.position = currentlatLng
         }
     }
+
     /**
      * @should Set the user profile photo to default if is empty or null
      */
@@ -342,12 +350,13 @@ class MapFragment : Fragment(),
             otherUserProfileLocationMarkers = HashMap()
         }
     }
+
     /**
      * @should Place a marker for other user on the map
      */
     private fun retrieveOtherUsersLocationFromDB() {
         val userQuery = AuthActivity.db.collection("users")
-            .whereNotEqualTo("uid", uid)
+            .whereNotEqualTo("uid", AuthUserObject.uid)
             .get()
 
         userQuery.addOnSuccessListener {
@@ -378,7 +387,9 @@ class MapFragment : Fragment(),
         // Filter user markers by radius of 1000m (seems to be quicker?)
         filterOtherMarkersByRadius(1000.0)
     }
+
     override fun onMarkerClick(p0: Marker) = false
+
     /**
      * @should show notification if other users are within the radius of 10m
      */
@@ -394,6 +405,7 @@ class MapFragment : Fragment(),
             othersInBoundsList.remove(otherUser.uid)
         }
     }
+
     /**
      * @should filter other user markers within a certain radius
      */
@@ -409,6 +421,7 @@ class MapFragment : Fragment(),
             }
         }
     }
+
     /**
      * @should check if other user is within a certain radius
      */
@@ -434,18 +447,7 @@ class MapFragment : Fragment(),
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CHECK_SETTINGS) {
             if (resultCode == Activity.RESULT_OK) {
-                //startLocationUpdates()
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d("seq", "onResume")
-        if (!bound){
-            Log.d("seq", "Bounding to services...")
-            Intent(requireContext(), LocationService::class.java).also { intent ->
-                activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
+                TODO("Not yet implemented")
             }
         }
     }
@@ -454,28 +456,8 @@ class MapFragment : Fragment(),
         super.onPause()
         if (bound){
             activity?.unbindService(connection)
-            //bound = false
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart - MapFragment")
-        if (!bound){
-            Intent(requireContext(), LocationService::class.java).also { intent ->
-                activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
-            }
-        }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        Log.d(TAG, "onStop - MapFragment")
-        // Unbind from the service
-        if (bound) {
-            activity?.unbindService(connection)
-            //bound = false
-        }
+        mapView!!.onPause()
     }
 
     /* CAMERA STUFF */
@@ -509,14 +491,12 @@ class MapFragment : Fragment(),
         Log.d(ContentValues.TAG, "onCameraIdle")
     }
 
-    // -- //
-
     override fun onDestroyView() {
         super.onDestroyView()
         _binding = null
     }
 
     override fun onLocationChanged(p0: Location) {
-        // Does nothing
+        TODO("Not yet implemented")
     }
 }
