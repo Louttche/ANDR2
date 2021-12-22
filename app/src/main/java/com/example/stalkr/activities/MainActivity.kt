@@ -35,17 +35,15 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        /*
-        val navHostFragment =
-            supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        val navHostFragment: NavHostFragment = supportFragmentManager
+            .findFragmentById(R.id.nav_host_fragment) as NavHostFragment? ?: return
         val navController = navHostFragment.navController
 
-        val bottomNavigationView = findViewById<BottomNavigationView>(R.id.bottomNavBar)
-        bottomNavigationView.setupWithNavController(navController)
-        */
+        val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavBar)
+        bottomNav?.setupWithNavController(navController)
 
-        // when app is initially opened the Map Fragment should be visible
-        changeFragment(MapFragment())
+        // transaction fragment change (not when using navhost)
+        //changeFragment(MapFragment())
     }
 
     /* Auth */
@@ -90,7 +88,8 @@ class MainActivity : AppCompatActivity() {
     // function to change the fragment which is used to reduce the lines of code
     private fun changeFragment(fragmentToChange: Fragment): Unit {
         supportFragmentManager.beginTransaction().apply {
-            replace(binding.fragmentContainerViewMain.id, fragmentToChange)
+            //replace(binding.fragmentContainerViewMain.id, fragmentToChange) // normal fragment container
+            replace(binding.navHostFragment.id, fragmentToChange) // navhost fragment container
             addToBackStack(null)
             commit()
         }
