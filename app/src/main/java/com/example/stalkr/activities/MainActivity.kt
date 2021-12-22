@@ -13,8 +13,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.ImageView
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 
 import androidx.fragment.app.Fragment
@@ -34,8 +32,6 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
-    private lateinit var broadcastReceiver: BroadcastReceiver
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -53,26 +49,6 @@ class MainActivity : AppCompatActivity() {
 
         // transaction fragment change (not when using navhost)
         //changeFragment(MapFragment())
-        val textViewDirection = findViewById<TextView>(R.id.textViewDirection)
-        val imageViewCompass = findViewById<ImageView>(R.id.imageViewCompass)
-
-        broadcastReceiver = object: BroadcastReceiver() {
-            override fun onReceive(context: Context, intent: Intent) {
-                val direction = intent.getStringExtra(SensorService.KEY_DIRECTION)
-                val angle = intent.getDoubleExtra(SensorService.KEY_ANGLE, 0.0)
-                val angleWithDirection = "$angle  $direction"
-                textViewDirection.text = angleWithDirection
-                imageViewCompass.rotation = angle.toFloat() * -1
-            }
-        }
-
-        LocalBroadcastManager.getInstance(this).registerReceiver(
-            broadcastReceiver,
-            IntentFilter(SensorService.KEY_ON_SENSOR_CHANGED_ACTION)
-        )
-
-        // when app is initially opened the Map Fragment should be visible
-        changeFragment(MapFragment())
     }
 
     /* Auth */
@@ -95,16 +71,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun signOut() {
         try {
-            // Set auth user as 'inactive' in DB
-            AuthUserObject.isActive = false
-            val users = AuthActivity.db.collection("users")
-
-            users.whereEqualTo("uid", AuthActivity.userDbData!!.uid)
-                .get()
-                .addOnSuccessListener { documents ->
-                    val userActive = hashMapOf("isActive" to false)
-                    users.document(documents.first().id).set(userActive, SetOptions.merge())
-                }
+            setUserActivity(AuthActivity.userDbData!!.uid, false)
         } catch (e: NullPointerException){
             Log.d(TAG, "Could not sign out - $e")
         } finally {
@@ -112,6 +79,19 @@ class MainActivity : AppCompatActivity() {
             startActivity(intent)
             finish()
         }
+    }
+
+    private fun setUserActivity(userID: String, active: Boolean){
+        // Set auth user as 'inactive' in DB
+        AuthUserObject.isActive = active
+        val users = AuthActivity.db.collection("users")
+
+        users.whereEqualTo("uid", userID)
+            .get()
+            .addOnSuccessListener { documents ->
+                val userActive = hashMapOf("isActive" to active)
+                users.document(documents.first().id).set(userActive, SetOptions.merge())
+            }
     }
 
     // function to change the fragment which is used to reduce the lines of code
@@ -152,7 +132,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        LocalBroadcastManager.getInstance(this).unregisterReceiver(broadcastReceiver)
+        // sign out
+        setUserActivity(AuthActivity.userDbData!!.uid, false)
         super.onDestroy()
     }
 

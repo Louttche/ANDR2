@@ -28,11 +28,4 @@
         app:layout_constraintStart_toStartOf="parent"
         app:menu="@menu/menu_bottomnav" />
 
-    <include
-        layout="@layout/view_compass_direction"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|end"
-        android:layout_marginEnd="8dp" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

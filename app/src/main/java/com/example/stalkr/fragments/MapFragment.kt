@@ -11,17 +11,17 @@ import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
 import android.view.*
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
+import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat.checkSelfPermission
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.example.stalkr.activities.AuthActivity
 import com.example.stalkr.data.UserProfileData
 
 import com.example.stalkr.databinding.FragmentMapBinding
 import com.example.stalkr.services.LocationService
 import com.example.stalkr.services.NotificationManager
+import com.example.stalkr.services.SensorService
 import com.example.stalkr.utils.MapUtils
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
@@ -87,6 +87,8 @@ class MapFragment : Fragment(),
     // Filter
     private var isFilteredByRadius = false
 
+    private lateinit var broadcastReceiver: BroadcastReceiver
+
     companion object {
         private const val LOCATION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
@@ -120,6 +122,24 @@ class MapFragment : Fragment(),
 
         mapView = _binding!!.mapView
         mapView!!.onCreate(savedInstanceState)
+
+        val textViewDirection = view.findViewById<TextView>(R.id.textViewDirection)
+        val imageViewCompass = view.findViewById<ImageView>(R.id.imageViewCompass)
+
+        broadcastReceiver = object: BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                val direction = intent.getStringExtra(SensorService.KEY_DIRECTION)
+                val angle = intent.getDoubleExtra(SensorService.KEY_ANGLE, 0.0)
+                val angleWithDirection = "$angle  $direction"
+                textViewDirection.text = angleWithDirection
+                imageViewCompass.rotation = angle.toFloat() * -1
+            }
+        }
+
+        LocalBroadcastManager.getInstance(this.requireContext()).registerReceiver(
+            broadcastReceiver,
+            IntentFilter(SensorService.KEY_ON_SENSOR_CHANGED_ACTION)
+        )
 
         notificationManager = NotificationManager(requireContext())
 
@@ -490,6 +510,7 @@ class MapFragment : Fragment(),
     }
 
     override fun onDestroyView() {
+        LocalBroadcastManager.getInstance(this.requireContext()).unregisterReceiver(broadcastReceiver)
         super.onDestroyView()
         _binding = null
     }
