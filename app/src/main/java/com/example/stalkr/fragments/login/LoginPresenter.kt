@@ -3,7 +3,8 @@ package com.example.stalkr.fragments.login
 import com.example.stalkr.enums.VerificationType
 import com.example.stalkr.repositories.AuthRepo
 
-class LoginPresenter(private var loginView: LoginContract.View?, private val authRepo: AuthRepo) : LoginContract.Presenter, AuthRepo.OnFinishedListener {
+class LoginPresenter(private var loginView: LoginContract.View?, private val authRepo: AuthRepo) :
+    LoginContract.Presenter, AuthRepo.OnFinishedListener {
 
     override fun onButtonLoginClicked(email: String, password: String) {
         authRepo.loginWithEmailAndPassword(email, password, this)
@@ -17,11 +18,10 @@ class LoginPresenter(private var loginView: LoginContract.View?, private val aut
         loginView?.showHomeScreen()
     }
 
-    override fun onVerificationError(verificationType: VerificationType){
+    override fun onVerificationError(verificationType: VerificationType) {
         if (verificationType == VerificationType.EMPTY_EMAIL) {
             loginView?.showEmptyEmailError()
-        }
-        else if (verificationType == VerificationType.INVALID_EMAIL) {
+        } else if (verificationType == VerificationType.INVALID_EMAIL) {
             loginView?.showInvalidEmailError()
         }
         if (verificationType == VerificationType.EMPTY_PASSWORD) {
@@ -38,6 +38,6 @@ class LoginPresenter(private var loginView: LoginContract.View?, private val aut
     }
 
     override fun onValidPassword() {
-       loginView?.disablePasswordLayoutError()
+        loginView?.disablePasswordLayoutError()
     }
 }

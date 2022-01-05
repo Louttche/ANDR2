@@ -1,17 +1,12 @@
 package com.example.stalkr.fragments
 
 import android.util.Log
-import androidx.test.espresso.intent.Intents
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.stalkr.MainActivity
-import org.junit.Assert.*
 import org.junit.Test
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
+import org.junit.After
+import org.junit.Before
+import org.junit.Rule
 import org.junit.runner.RunWith
-import com.google.common.truth.Truth.assertThat
-import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.rule.GrantPermissionRule
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore

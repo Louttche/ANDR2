@@ -1,10 +1,9 @@
-package com.example.stalkr
+package com.example.stalkr.activities
 
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -12,7 +11,6 @@ import android.os.Bundle
 import android.util.Log
 import android.content.ContentValues.TAG
 import android.content.Intent
-import android.content.IntentFilter
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.content.ContextCompat
@@ -20,6 +18,8 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.example.stalkr.AuthUserObject
+import com.example.stalkr.R
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
@@ -92,7 +92,6 @@ class MainActivity : AppCompatActivity() {
                 .setNegativeButton("No", null)
                 .setPositiveButton("Yes", object : DialogInterface.OnClickListener {
                     override fun onClick(arg0: DialogInterface?, arg1: Int) {
-                        Firebase.auth.signOut()
                         signOut()
                     }
                 }).create().show()
@@ -125,7 +124,11 @@ class MainActivity : AppCompatActivity() {
     /* Auth */
     private fun signOut() {
         try {
-            setUserActivity(AuthActivity.userDbData!!.uid, false)
+            // Update user login status to inActive
+            setUserToInactive()
+
+            // SignOut from firebase (After signedOut AuthUser will be null)
+            Firebase.auth.signOut()
         } catch (e: NullPointerException){
             Log.d(TAG, "Could not sign out - $e")
         } finally {
@@ -135,16 +138,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setUserActivity(userID: String, active: Boolean){
+    private fun setUserToInactive(){
         // Set auth user as 'inactive' in DB
-        AuthUserObject.isActive = active
-        val users = AuthActivity.db.collection("users")
+        AuthUserObject.isActive = false
+        val users =  FirebaseFirestore.getInstance().collection("users")
 
-        users.whereEqualTo("uid", userID)
+        users.whereEqualTo("uid", Firebase.auth.uid.toString())
             .get()
             .addOnSuccessListener { documents ->
-                val userActive = hashMapOf("isActive" to active)
-                users.document(documents.first().id).set(userActive, SetOptions.merge())
+                val userActive = hashMapOf("isActive" to false)
+                users.document(documents.single().id).set(userActive, SetOptions.merge())
             }
     }
 
@@ -165,20 +168,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
-        super.onResume()
         startForegroundServiceForSensors(false)
-
+        super.onResume()
     }
 
     override fun onPause() {
-        super.onPause()
         startForegroundServiceForSensors(true)
-    }
-
-    override fun onDestroy() {
-        // sign out
-        setUserActivity(AuthActivity.userDbData!!.uid, false)
-        super.onDestroy()
+        super.onPause()
     }
 
     private fun startForegroundServiceForSensors(background: Boolean) {

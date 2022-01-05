@@ -12,6 +12,7 @@ import com.example.stalkr.utils.ImageUtils
 
 import androidx.navigation.fragment.navArgs
 import com.example.stalkr.activities.AuthActivity
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 
 class ProfileFragment : Fragment() {
@@ -35,7 +36,7 @@ class ProfileFragment : Fragment() {
         var uID = args.userID
         Log.d("wow", "User - $uID")
 
-        val users = AuthActivity.db.collection("users")
+        val users = FirebaseFirestore.getInstance().collection("users")
         val userQuery = users
             .whereEqualTo("uid", uID)
             .get()

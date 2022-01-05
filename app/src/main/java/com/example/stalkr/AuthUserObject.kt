@@ -3,7 +3,7 @@ package com.example.stalkr
 import android.content.ContentValues.TAG
 import android.location.Location
 import android.util.Log
-import com.example.stalkr.activities.AuthActivity
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 
 object AuthUserObject {
@@ -14,14 +14,14 @@ object AuthUserObject {
     var pfpURL: String = ""
     var isActive: Boolean = false
 
-    fun updateUserLocationInDB(location: Location){
+    fun updateUserLocationInDB(location: Location) {
         try {
             val userLocation = hashMapOf(
                 "latitude" to location.latitude,
                 "longitude" to location.longitude
             )
 
-            val users = AuthActivity.db.collection("users")
+            val users = FirebaseFirestore.getInstance().collection("users")
             val userQuery = users
                 .whereEqualTo("uid", this.uid)
                 .get()
@@ -32,7 +32,7 @@ object AuthUserObject {
                     Log.d(TAG, "No such element - $e")
                 }
             }
-        } catch(e: NullPointerException){
+        } catch (e: NullPointerException) {
             Log.d(TAG, "Could not update user's $name location in DB - $e")
         }
     }

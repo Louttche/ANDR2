@@ -14,7 +14,7 @@ import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.example.stalkr.MainActivity
+import com.example.stalkr.activities.MainActivity
 import com.example.stalkr.broadcastReceivers.ActionListener
 import kotlin.math.round
 
@@ -37,8 +37,10 @@ class SensorService : Service(), SensorEventListener {
         val KEY_DIRECTION = "direction"
         val KEY_BACKGROUND = "background"
         val KEY_NOTIFICATION_ID = "notificationId"
-        val KEY_ON_SENSOR_CHANGED_ACTION = "com.example.stalkr.services.SensorService.ON_SENSOR_CHANGED"
-        val KEY_NOTIFICATION_STOP_ACTION = "com.example.stalkr.services.SensorService.NOTIFICATION_STOP"
+        val KEY_ON_SENSOR_CHANGED_ACTION =
+            "com.example.stalkr.services.SensorService.ON_SENSOR_CHANGED"
+        val KEY_NOTIFICATION_STOP_ACTION =
+            "com.example.stalkr.services.SensorService.NOTIFICATION_STOP"
     }
 
     override fun onCreate() {
@@ -47,11 +49,21 @@ class SensorService : Service(), SensorEventListener {
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         // Get accelerometer sensor and register its listener to the sensor manager
         sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER).also { accelerometer ->
-            sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI)
+            sensorManager.registerListener(
+                this,
+                accelerometer,
+                SensorManager.SENSOR_DELAY_NORMAL,
+                SensorManager.SENSOR_DELAY_UI
+            )
         }
         // Get magneticField sensor and register its listener to the sensor manager
         sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD).also { magneticField ->
-            sensorManager.registerListener(this, magneticField, SensorManager.SENSOR_DELAY_NORMAL, SensorManager.SENSOR_DELAY_UI)
+            sensorManager.registerListener(
+                this,
+                magneticField,
+                SensorManager.SENSOR_DELAY_NORMAL,
+                SensorManager.SENSOR_DELAY_UI
+            )
         }
 
         val notification = createNotification(getString(R.string.not_available), 0.0)
@@ -89,7 +101,12 @@ class SensorService : Service(), SensorEventListener {
 
     private fun updateOrientationAngles() {
         // Get orientation and convert to degrees
-        SensorManager.getRotationMatrix(rotationMatrix, null, accelerometerReading, magnetometerReading)
+        SensorManager.getRotationMatrix(
+            rotationMatrix,
+            null,
+            accelerometerReading,
+            magnetometerReading
+        )
         val orientation = SensorManager.getOrientation(rotationMatrix, orientationAngles)
         val degrees = (Math.toDegrees(orientation[0].toDouble()) + 360) % 360
         val angle = round(degrees * 100) / 100
@@ -159,7 +176,8 @@ class SensorService : Service(), SensorEventListener {
         // Create pending intent opening direction activity
         val contentIntent = PendingIntent.getActivity(
             this, notificationActivityRequestCode,
-            Intent(this, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT)
+            Intent(this, MainActivity::class.java), PendingIntent.FLAG_UPDATE_CURRENT
+        )
 
         // Create stop notification
         val stopNotificationIntent = Intent(this, ActionListener::class.java)
@@ -168,7 +186,12 @@ class SensorService : Service(), SensorEventListener {
 
         // Create pending notification for stopping the notification and service
         val pendingStopNotificationIntent =
-            PendingIntent.getBroadcast(this, notificationStopRequestCode, stopNotificationIntent, PendingIntent.FLAG_UPDATE_CURRENT)
+            PendingIntent.getBroadcast(
+                this,
+                notificationStopRequestCode,
+                stopNotificationIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT
+            )
 
         // Configure the notification
         notificationBuilder.setAutoCancel(true)
@@ -181,8 +204,11 @@ class SensorService : Service(), SensorEventListener {
             .setSound(null)
             .setSmallIcon(R.mipmap.ic_launcher_round)
             .setContentIntent(contentIntent)
-            .addAction(R.mipmap.ic_launcher_round, getString(R.string.stop_notifications), pendingStopNotificationIntent)
-
+            .addAction(
+                R.mipmap.ic_launcher_round,
+                getString(R.string.stop_notifications),
+                pendingStopNotificationIntent
+            )
 
         return notificationBuilder.build()
     }

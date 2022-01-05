@@ -10,12 +10,12 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
 
-internal class VerificationTest {
-    private lateinit var verification:Verification
+internal class ValidationTest {
+    private lateinit var validation: Validation
 
     @BeforeEach
     internal fun setUp() {
-        verification = Verification()
+        validation = Validation()
     }
 
     @ParameterizedTest
@@ -37,9 +37,9 @@ internal class VerificationTest {
         "JuliaZ007, false",
         "_Julia007.com, false",
         "_Julia007@abc.co.in, false",
-        )
+    )
     fun `isEmailValid should check if email is valid or not`(email: String, expected: Boolean) {
-        val isEmailValid = verification.isEmailValid(email)
+        val isEmailValid = validation.isEmailValid(email)
         assertEquals(expected, isEmailValid)
     }
 
@@ -56,21 +56,24 @@ internal class VerificationTest {
         "test123!, false",
         "DSFSD123!, false",
 
-    )
-    fun `isPasswordValid should check if password is valid or not`(password: String, expected: Boolean) {
-        val isPasswordValid = verification.isPasswordValid(password)
+        )
+    fun `isPasswordValid should check if password is valid or not`(
+        password: String,
+        expected: Boolean
+    ) {
+        val isPasswordValid = validation.isPasswordValid(password)
         assertEquals(expected, isPasswordValid)
     }
 
     @Test
     fun `isPasswordValid should check if password is empty`() {
-        verification.isPasswordValid("")
-        assertTrue(verification.getIsPasswordEmpty())
+        validation.isPasswordValid("")
+        assertTrue(validation.getIsPasswordEmpty())
     }
 
     @Test
     fun `isEmailValid should check if email is empty`() {
-        verification.isEmailValid("")
-        assertTrue(verification.getIsEmailEmpty())
+        validation.isEmailValid("")
+        assertTrue(validation.getIsEmailEmpty())
     }
 }
