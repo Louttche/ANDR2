@@ -6,10 +6,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import com.bumptech.glide.Glide
 import com.example.stalkr.AuthUserObject
-import com.example.stalkr.R
-import com.example.stalkr.databinding.FragmentMapBinding
 import com.example.stalkr.utils.ImageUtils
 
 class AccountFragment : Fragment() {

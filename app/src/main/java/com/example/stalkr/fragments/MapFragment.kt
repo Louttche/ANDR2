@@ -19,11 +19,12 @@ import com.example.stalkr.activities.AuthActivity
 import com.example.stalkr.data.UserProfileData
 
 import com.example.stalkr.databinding.FragmentMapBinding
+import com.example.stalkr.fragments.ProfileFragment
+import com.example.stalkr.fragments.ProfileFragmentDirections
 import com.example.stalkr.services.LocationService
 import com.example.stalkr.services.NotificationManager
 import com.example.stalkr.services.SensorService
 import com.example.stalkr.utils.MapUtils
-import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.GoogleMap
@@ -34,7 +35,8 @@ import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.MapView
 
 class MapFragment : Fragment(),
-    OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
+    OnMapReadyCallback, GoogleMap.OnMarkerClickListener,
+    GoogleMap.OnInfoWindowClickListener,
     GoogleMap.OnCameraMoveStartedListener,
     GoogleMap.OnCameraMoveListener,
     GoogleMap.OnCameraMoveCanceledListener,
@@ -212,6 +214,7 @@ class MapFragment : Fragment(),
         // Set up the custom info window
         val customInfoWindow = CustomInfoWindowForGoogleMap(requireContext())
         mMap!!.setInfoWindowAdapter(customInfoWindow)
+        mMap.setOnInfoWindowClickListener(this)
 
         setupMap()
     }
@@ -385,7 +388,7 @@ class MapFragment : Fragment(),
 
                 val otherUser = UserProfileData(document.get("uid").toString())
                 // Make sure the user is updated from the DB before displaying info about them
-                otherUser.updateUserProfileFromDB(document)
+                otherUser.UpdateUserProfileFromDB(document)
                 placeOtherMarkerOnMap(latLng, otherUser)
                 // Check if other user in 10 meters range
 
@@ -460,16 +463,6 @@ class MapFragment : Fragment(),
         return othersAroundBounds.contains(otherUserLatLng)
     }
 
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        Log.d(TAG, "MainActivity - onActivityResult")
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == REQUEST_CHECK_SETTINGS) {
-            if (resultCode == Activity.RESULT_OK) {
-                TODO("Not yet implemented")
-            }
-        }
-    }
-
     override fun onPause() {
         super.onPause()
         if (bound){
@@ -515,7 +508,14 @@ class MapFragment : Fragment(),
         _binding = null
     }
 
-    override fun onLocationChanged(p0: Location) {
-        TODO("Not yet implemented")
+    override fun onInfoWindowClick(p0: Marker) {
+        for ((userData, marker) in otherUserProfileLocationMarkers!!) {
+            if (marker == p0){
+                Log.d("wow", "onInfoWindowClick - " + userData.name)
+
+                val action = MapFragmentDirections.actionMapFragmentToProfileFragment(userData.uid)
+                MainActivity.navHostFragment!!.navController.navigate(action)
+            }
+        }
     }
 }

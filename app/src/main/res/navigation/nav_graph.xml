@@ -16,6 +16,7 @@
             android:id="@+id/action_mapFragment_to_accountFragment"
             app:destination="@id/accountFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.stalkr.fragments.ProfileFragment"
@@ -23,8 +24,13 @@
         tools:layout="@layout/fragment_profile" >
         <action
             android:id="@+id/action_profileFragment_to_mapFragment"
-            app:destination="@id/mapFragment" />
+            app:destination="@id/mapFragment"/>
+        <argument
+            android:name="userID"
+            app:argType="string"
+            android:defaultValue="1" />
     </fragment>
+
     <fragment
         android:id="@+id/accountFragment"
         android:name="com.example.stalkr.fragments.AccountFragment"
