@@ -72,7 +72,7 @@ class NotificationManager(private val context: Context) {
             .setAutoCancel(true)
             .setVibrate(
                 longArrayOf(
-                    1000, 1000
+                    1000, 1000, 1000
                 )
             )
             .setSound(defaultSoundUri)
