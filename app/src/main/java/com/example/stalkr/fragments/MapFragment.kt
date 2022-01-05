@@ -2,6 +2,7 @@ package com.example.stalkr
 
 import android.Manifest
 import android.app.Activity
+import android.app.Activity.RESULT_OK
 import android.content.*
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
@@ -25,6 +26,7 @@ import com.example.stalkr.services.LocationService
 import com.example.stalkr.services.NotificationManager
 import com.example.stalkr.services.SensorService
 import com.example.stalkr.utils.MapUtils
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.GoogleMap
@@ -33,6 +35,12 @@ import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.*
 import com.google.android.gms.maps.MapView
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+
+import com.google.firebase.firestore.SetOptions
 
 class MapFragment : Fragment(),
     OnMapReadyCallback, GoogleMap.OnMarkerClickListener,
@@ -45,6 +53,13 @@ class MapFragment : Fragment(),
     private var _binding: FragmentMapBinding? = null
     private val binding get() = _binding!!
 
+    // AUTH + DB
+    private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")
+    private val storageRef = FirebaseStorage.getInstance().reference
+
+    // temp - for debug
+    private var uid: String = Firebase.auth.currentUser!!.uid
+    //private val currentUser get() = AuthActivity.userData
     // MAP
     private var mapView: MapView? = null
     private lateinit var mMap: GoogleMap
@@ -68,8 +83,10 @@ class MapFragment : Fragment(),
             locationService = binder.getService()
             bound = true
 
-            if (!locationInitiated)
+            if (!locationInitiated) {
+                Log.d("GGGG", "HERE")
                 initLocationService()
+            }
         }
 
         override fun onServiceDisconnected(arg0: ComponentName) {
@@ -94,6 +111,7 @@ class MapFragment : Fragment(),
     companion object {
         private const val LOCATION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
+        private const val PICK_IMAGE_REQUEST = 22
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -110,9 +128,24 @@ class MapFragment : Fragment(),
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
 
+        // My location click handler
         binding.btnMyLocation.setOnClickListener {
             if (currentLocation != null)
                 moveCamera(currentLocation)
+        }
+
+        // Picture upload click handler
+        binding.btnMyPicture.setOnClickListener {
+            val intent = Intent()
+            intent.type = "image/*"
+            intent.action = Intent.ACTION_GET_CONTENT
+            startActivityForResult(
+                Intent.createChooser(
+                    intent,
+                    "Select Image from here..."
+                ),
+                PICK_IMAGE_REQUEST
+            )
         }
 
         return binding.root
@@ -359,12 +392,14 @@ class MapFragment : Fragment(),
                 markerOptions.position(latLng)
                 markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
                 markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
-                markerOptions.snippet(userProfile.pfpURL)
                 markerOptions.title(userProfile.name)
-
+                markerOptions.snippet(userProfile.pfpURL)
                 val otherUserLocationMarker: Marker? = mMap.addMarker(markerOptions)
                 if (otherUserLocationMarker != null) {
-                    otherUserProfileLocationMarkers!!.putIfAbsent(userProfile, otherUserLocationMarker)
+                    otherUserProfileLocationMarkers!!.putIfAbsent(
+                        userProfile,
+                        otherUserLocationMarker
+                    )
                 }
             }
         } else {
@@ -463,13 +498,63 @@ class MapFragment : Fragment(),
         return othersAroundBounds.contains(otherUserLatLng)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        Log.d(TAG, "MainActivity - onActivityResult")
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_CHECK_SETTINGS) {
+            if (resultCode == Activity.RESULT_OK) {
+                TODO("Not yet implemented")
+            }
+        }
+
+        // Profile image upload
+        if (requestCode === PICK_IMAGE_REQUEST && resultCode === RESULT_OK && data != null && data.data != null) {
+            // Get the Uri of data
+            val filePath = data.data
+            if (filePath != null) {
+                val profileImageRef = storageRef.child("profileImages/$uid")
+
+                profileImageRef.putFile(filePath).addOnSuccessListener {
+                    profileImageRef.downloadUrl.addOnSuccessListener { uri ->
+                        val userProfileImageURL = hashMapOf(
+                            "profileImageURL" to uri.toString()
+                        )
+
+                        val userQuery = userCollectionRef
+                            .whereEqualTo("uid", this.uid)
+                            .get()
+                        userQuery.addOnSuccessListener {
+                            try {
+                                AuthUserObject.pfpURL = uri.toString()
+                                userCollectionRef.document(it.first().id).set(userProfileImageURL, SetOptions.merge())
+                            } catch (e: NoSuchElementException) {
+                                Log.d(TAG, "No such element - $e")
+                            }
+
+                            Toast.makeText(requireContext(), "Image Uploaded!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun onPause() {
         super.onPause()
         if (bound){
             activity?.unbindService(connection)
+            bound = false
+            locationInitiated = false
         }
         mapView!!.onPause()
     }
+
+    /*override fun onResume() {
+        super.onResume()
+        boundLocationService()
+        mapView!!.onResume()
+    }
+    */
 
     /* CAMERA STUFF */
 

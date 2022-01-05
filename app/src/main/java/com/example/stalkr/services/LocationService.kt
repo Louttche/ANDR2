@@ -12,6 +12,7 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.os.Binder
 import android.os.IBinder
+import android.os.Looper
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
@@ -60,7 +61,7 @@ class LocationService: Service() {
             fusedLocationClient.requestLocationUpdates(
                 locationRequest,
                 locationCallback,
-                null /* Looper */
+                Looper.getMainLooper()
             )
         }
     }
@@ -119,7 +120,8 @@ class LocationService: Service() {
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
-        return super.onUnbind(intent)
+        fusedLocationClient.removeLocationUpdates(locationCallback)
         Log.d(TAG,"on LocationService onUnbind");
+        return super.onUnbind(intent)
     }
 }
