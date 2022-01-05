@@ -40,11 +40,11 @@ data class GroupData(var gid: String, var title: String, var chat: ChatData){
     }
 
     fun UpdateGroupFromDB(){
-        val groups = AuthActivity.db.collection("groups")
+        val groups = FirebaseFirestore.getInstance().collection("groups")
         val groupsQuery = groups.whereEqualTo("gid", this.gid)
             .get().addOnSuccessListener { groups ->
                 this.title = groups.first().data["title"].toString()
-                this.chat.UpdateChatFromDB()
+                this.chat.updateChatFromDB()
 
                 // TODO: Update members
 
