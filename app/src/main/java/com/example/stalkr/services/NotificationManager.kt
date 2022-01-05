@@ -9,7 +9,7 @@ import android.os.Build
 import android.widget.RemoteViews
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
-import com.example.stalkr.MainActivity
+import com.example.stalkr.activities.MainActivity
 import com.example.stalkr.R
 
 /**
