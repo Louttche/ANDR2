@@ -2,7 +2,7 @@ package com.example.stalkr.data
 
 import android.content.ContentValues
 import android.util.Log
-import com.example.stalkr.activities.AuthActivity
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.IgnoreExtraProperties
 
 @IgnoreExtraProperties
@@ -12,21 +12,22 @@ data class ChatData(var cid: String, var members: MutableList<UserProfileData>) 
     var messages: MutableList<MessageData> = mutableListOf()
 
     // Methods
-    fun UpdateChatFromDB(){
-        AuthActivity.db.collection("chats")
+    fun updateChatFromDB() {
+        FirebaseFirestore.getInstance().collection("chats")
             .whereEqualTo("cid", this.cid)
             .get().addOnSuccessListener { groups ->
                 // TODO: update members + messages ?
-            }.addOnFailureListener(){
+            }.addOnFailureListener() {
                 Log.w(ContentValues.TAG, "Error getting messages from chat: ${this.cid}.", it)
             }
     }
 
-    fun AddMessage(message: MessageData){
+    fun AddMessage(message: MessageData) {
         if (!this.messages.contains(message))
             this.messages.add(message)
     }
-    fun RemoveMessage(message: MessageData){
+
+    fun RemoveMessage(message: MessageData) {
         if (this.messages.contains(message))
             this.messages.remove(message)
     }
@@ -38,6 +39,7 @@ data class ChatData(var cid: String, var members: MutableList<UserProfileData>) 
         if (cid != other.gid) return false
         return true
     }
+
     override fun hashCode(): Int {
         return cid.hashCode()
     }
