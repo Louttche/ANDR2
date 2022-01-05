@@ -1,5 +1,6 @@
 package com.example.stalkr.data
 import android.location.Location
+import com.example.stalkr.AuthUserObject
 import com.example.stalkr.activities.AuthActivity
 import com.google.firebase.firestore.IgnoreExtraProperties
 import com.google.firebase.firestore.QueryDocumentSnapshot
@@ -12,14 +13,13 @@ data class UserProfileData (val uid: String, var name: String? = null, var pfpUR
 
     // Fields
     var isActive: Boolean = false
-    var groups: MutableList<GroupData>? = mutableListOf()
 
     // Methods
     
     /**
      *  @should set name to a default string if empty or null
      */
-    fun updateUserProfileFromDB(document: QueryDocumentSnapshot){
+    fun UpdateUserProfileFromDB(document: QueryDocumentSnapshot){
         this.name = document.data["name"].toString()
         this.pfpURL = document.data["profileImageURL"].toString()
         if (this.name == null || this.name == "")

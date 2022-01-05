@@ -25,6 +25,8 @@ class CustomInfoWindowForGoogleMap(context: Context) : GoogleMap.InfoWindowAdapt
     private var mContext = context
 
     override fun getInfoContents(marker: Marker): View {
+        // If this also returns null, then the default info window will be used.
+
         var mInfoView = (mContext as Activity).layoutInflater.inflate(R.layout.view_user_map_overlay, null)
         //var mInfoWindow: InfoWindowData? = marker?.tag as InfoWindowData?
 
@@ -40,22 +42,11 @@ class CustomInfoWindowForGoogleMap(context: Context) : GoogleMap.InfoWindowAdapt
                 .into(iv_photo)
         }
 
-        val btn_viewprofile : Button = mInfoView.findViewById(R.id.btn_view_profile)
-        btn_viewprofile.setOnClickListener{
-            // TODO: View this user's profile
-            Log.d("wow", "Clicked on view user's profile button")
-        }
-
-        val btn_invitetogroup : Button = mInfoView.findViewById(R.id.btn_invite_group)
-        btn_invitetogroup.setOnClickListener{
-            // TODO: Invite this user to a group
-            Log.d("wow", "Clicked on view invite user button")
-        }
-
         return mInfoView
     }
 
     override fun getInfoWindow(marker: Marker): View? {
+        // The API will first call getInfoWindow(Marker) and if null is returned, it will then call getInfoContents(Marker)
         return null
     }
 }
