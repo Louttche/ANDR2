@@ -1,8 +1,7 @@
-package com.example.stalkr
+package com.example.stalkr.activities
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
@@ -10,7 +9,6 @@ import android.os.Bundle
 import android.util.Log
 import android.content.ContentValues.TAG
 import android.content.Intent
-import android.content.IntentFilter
 import android.view.Menu
 import android.view.MenuItem
 import androidx.core.content.ContextCompat
@@ -18,12 +16,13 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.example.stalkr.activities.AuthActivity
+import com.example.stalkr.AuthUserObject
+import com.example.stalkr.R
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.example.stalkr.databinding.ActivityMainBinding
 import com.example.stalkr.services.SensorService
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.ktx.Firebase
 import java.lang.NullPointerException
@@ -59,7 +58,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (R.id.action_logout == item.itemId) {
-            Firebase.auth.signOut()
             signOut()
         } else {
             // If we got here, the user's action was not recognized.
@@ -71,7 +69,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun signOut() {
         try {
-            setUserActivity(AuthActivity.userDbData!!.uid, false)
+            // Update user login status to inActive
+            setUserToInactive()
+
+            // SignOut from firebase (After signedOut AuthUser will be null)
+            Firebase.auth.signOut()
         } catch (e: NullPointerException){
             Log.d(TAG, "Could not sign out - $e")
         } finally {
@@ -81,21 +83,21 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setUserActivity(userID: String, active: Boolean){
+    private fun setUserToInactive(){
         // Set auth user as 'inactive' in DB
-        AuthUserObject.isActive = active
-        val users = AuthActivity.db.collection("users")
+        AuthUserObject.isActive = false
+        val users =  FirebaseFirestore.getInstance().collection("users")
 
-        users.whereEqualTo("uid", userID)
+        users.whereEqualTo("uid", Firebase.auth.uid.toString())
             .get()
             .addOnSuccessListener { documents ->
-                val userActive = hashMapOf("isActive" to active)
-                users.document(documents.first().id).set(userActive, SetOptions.merge())
+                val userActive = hashMapOf("isActive" to false)
+                users.document(documents.single().id).set(userActive, SetOptions.merge())
             }
     }
 
     // function to change the fragment which is used to reduce the lines of code
-    private fun changeFragment(fragmentToChange: Fragment): Unit {
+    private fun changeFragment(fragmentToChange: Fragment) {
         supportFragmentManager.beginTransaction().apply {
             //replace(binding.fragmentContainerViewMain.id, fragmentToChange) // normal fragment container
             replace(binding.navHostFragment.id, fragmentToChange) // navhost fragment container
@@ -121,20 +123,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
-        super.onResume()
         startForegroundServiceForSensors(false)
-
+        super.onResume()
     }
 
     override fun onPause() {
-        super.onPause()
         startForegroundServiceForSensors(true)
-    }
-
-    override fun onDestroy() {
-        // sign out
-        setUserActivity(AuthActivity.userDbData!!.uid, false)
-        super.onDestroy()
+        super.onPause()
     }
 
     private fun startForegroundServiceForSensors(background: Boolean) {
