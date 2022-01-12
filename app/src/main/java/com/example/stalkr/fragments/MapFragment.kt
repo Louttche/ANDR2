@@ -446,14 +446,15 @@ class MapFragment : Fragment(),
      * @should show notification if other users are within the radius of 10m
      */
     private fun checkForStalkers(otherUser: UserProfileData, latLng: LatLng) {
-        val otherInBounds = isOtherUserInBound(10.0, latLng)
+        val otherInBounds = isOtherUserInBound(50.0, latLng)
+        val otherInOutsideBounds = isOtherUserInBound(80.0, latLng)
         val otherAlreadyInBounds = othersInBoundsList.contains(otherUser.uid)
 
         if (otherInBounds && !otherAlreadyInBounds) {
             val otherUserName = otherUser.name
             othersInBoundsList.add(otherUser.uid)
             notificationManager.show("You are being stalked", "$otherUserName is stalking you!")
-        } else if (!otherInBounds && otherAlreadyInBounds) {
+        } else if (!otherInOutsideBounds && otherAlreadyInBounds) {
             othersInBoundsList.remove(otherUser.uid)
         }
     }
