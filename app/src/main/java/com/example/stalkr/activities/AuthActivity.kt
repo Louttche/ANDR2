@@ -28,6 +28,8 @@ class AuthActivity : AppCompatActivity(), AuthFragmentCallback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Set default theme
+        setTheme(R.style.Theme_Stalkr_NoActionBar)
         setContentView(R.layout.activity_auth)
         // Disable night mode (looks weird with the black background)
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO)
