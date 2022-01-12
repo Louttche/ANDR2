@@ -2,7 +2,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.stalkr">
-
     <!--
          The ACCESS_COARSE/FINE_LOCATION permissions are not required to use
          Google Maps Android API v2, but you must specify either coarse or fine
@@ -16,13 +15,9 @@
         android:name="android.hardware.sensor.gyroscope"
         android:required="true" />
 
-
     <!--Permissions for internet-->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-
-    <!-- <instrumentation android:targetPackage="com.example.android.testing.espresso.IntentsBasicSample"
-        android:name="androidx.test.runner.AndroidJUnitRunner"/> -->
 
     <application
         android:allowBackup="true"
@@ -32,18 +27,16 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Stalkr"
         android:usesCleartextTraffic="true">
-
         <activity
             android:name=".activities.AuthActivity"
             android:exported="true"
-            android:theme="@style/Theme.Stalkr.NoActionBar">
+            android:theme="@style/Theme.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-
         <activity
             android:name=".activities.MainActivity"
             android:exported="true"
@@ -75,11 +68,9 @@
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
         </service>
-
         <service
             android:name=".services.LocationService"
             android:exported="true" />
-
     </application>
 
 </manifest>

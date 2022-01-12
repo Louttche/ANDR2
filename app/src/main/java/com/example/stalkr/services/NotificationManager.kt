@@ -36,7 +36,7 @@ class NotificationManager(private val context: Context) {
         remoteViews.setTextViewText(R.id.message, message)
         remoteViews.setImageViewResource(
             R.id.icon,
-            R.drawable.stalkr_logo
+            R.drawable.ic_incognito
         )
         return remoteViews
     }
@@ -68,7 +68,7 @@ class NotificationManager(private val context: Context) {
             context,
             "notification_channel"
         )
-            .setSmallIcon(R.drawable.stalkr_logo)
+            .setSmallIcon(R.drawable.ic_incognito)
             .setAutoCancel(true)
             .setVibrate(
                 longArrayOf(
@@ -92,7 +92,7 @@ class NotificationManager(private val context: Context) {
         else {
             builder.setContentTitle(title)
                 .setContentText(message)
-                .setSmallIcon(R.drawable.stalkr_logo)
+                .setSmallIcon(R.drawable.ic_incognito)
         }
 
         with(NotificationManagerCompat.from(context)) {

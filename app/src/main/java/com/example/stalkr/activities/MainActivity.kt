@@ -36,21 +36,18 @@ import androidx.navigation.ui.AppBarConfiguration
 import android.content.DialogInterface
 
 
-
-
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
 
     companion object NavData {
-        var navHostFragment : NavHostFragment? = null
+        var navHostFragment: NavHostFragment? = null
     }
 
     var appBarConfiguration: AppBarConfiguration? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         createNotificationChannel("Notification channel", "A channel for sending notifications")
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -61,7 +58,8 @@ class MainActivity : AppCompatActivity() {
         val navController = navHostFragment!!.navController
 
         appBarConfiguration = AppBarConfiguration.Builder(navController.graph).build()
-        NavigationUI.setupActionBarWithNavController( this,
+        NavigationUI.setupActionBarWithNavController(
+            this,
             navController, appBarConfiguration!!
         )
 
@@ -75,7 +73,7 @@ class MainActivity : AppCompatActivity() {
     /* NAVIGATION */
     override fun onSupportNavigateUp(): Boolean {
         // TODO: FIX
-        return  NavigationUI.navigateUp(navHostFragment!!.navController, appBarConfiguration!!)
+        return NavigationUI.navigateUp(navHostFragment!!.navController, appBarConfiguration!!)
                 || super.onSupportNavigateUp()
     }
 
@@ -114,7 +112,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             return true
-        } catch (e : Exception){
+        } catch (e: Exception) {
             Log.ERROR
         }
 
@@ -129,7 +127,7 @@ class MainActivity : AppCompatActivity() {
 
             // SignOut from firebase (After signedOut AuthUser will be null)
             Firebase.auth.signOut()
-        } catch (e: NullPointerException){
+        } catch (e: NullPointerException) {
             Log.d(TAG, "Could not sign out - $e")
         } finally {
             val intent = Intent(this, AuthActivity::class.java)
@@ -138,10 +136,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setUserToInactive(){
+    private fun setUserToInactive() {
         // Set auth user as 'inactive' in DB
         AuthUserObject.isActive = false
-        val users =  FirebaseFirestore.getInstance().collection("users")
+        val users = FirebaseFirestore.getInstance().collection("users")
 
         users.whereEqualTo("uid", Firebase.auth.uid.toString())
             .get()
