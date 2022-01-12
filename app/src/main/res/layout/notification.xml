@@ -20,7 +20,7 @@
                 android:layout_width="50dp"
                 android:layout_height="50dp"
                 android:padding="5dp"
-                android:src="@drawable/stalkr_logo" />
+                android:src="@drawable/ic_incognito" />
         </LinearLayout>
 
         <!-- Parent layout for holding the Title and the Body-->
