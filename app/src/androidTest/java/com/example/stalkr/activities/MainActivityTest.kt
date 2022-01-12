@@ -7,7 +7,6 @@ import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.internal.runner.junit4.AndroidJUnit4ClassRunner
 
-import com.example.stalkr.MainActivity
 import com.example.stalkr.R
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -23,12 +22,15 @@ import org.junit.*
 class MainActivityTest {
 
     @get:Rule
-    var grantFineLocationPermissionRule: GrantPermissionRule = GrantPermissionRule.grant("android.permission.ACCESS_FINE_LOCATION")
-    @get:Rule
-    var grantCoarseLocationPermissionRule: GrantPermissionRule = GrantPermissionRule.grant("android.permission.ACCESS_COARSE_LOCATION")
+    var grantFineLocationPermissionRule: GrantPermissionRule =
+        GrantPermissionRule.grant("android.permission.ACCESS_FINE_LOCATION")
 
-    private val firestore : FirebaseFirestore = FirebaseFirestore.getInstance()
-    private val firebaseAuth : FirebaseAuth = FirebaseAuth.getInstance()
+    @get:Rule
+    var grantCoarseLocationPermissionRule: GrantPermissionRule =
+        GrantPermissionRule.grant("android.permission.ACCESS_COARSE_LOCATION")
+
+    private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val firebaseAuth: FirebaseAuth = FirebaseAuth.getInstance()
 
     // makes each test method execute one after the other (good for async stuff)
     //@get:Rule
@@ -39,22 +41,22 @@ class MainActivityTest {
     //val activityRule = ActivityScenarioRule(MainActivity::class.java)
 
     @Before
-    fun setup(){
+    fun setup() {
         try {
             firestore.useEmulator("10.0.2.2", 8080) // Cloud Firestore Emulator
             firebaseAuth.useEmulator("10.0.2.2", 9099) // Authentication Emulator
 
-            val settings : FirebaseFirestoreSettings = FirebaseFirestoreSettings.Builder()
+            val settings: FirebaseFirestoreSettings = FirebaseFirestoreSettings.Builder()
                 .setPersistenceEnabled(false)
                 .build()
             firestore.firestoreSettings = settings
-        } catch (e: IllegalStateException){
+        } catch (e: IllegalStateException) {
             Log.d("tests", "Firestore useEmulator() already called. - $e")
         }
     }
 
     @Test
-    fun changeToMapFragmentWhenCreated(){
+    fun changeToMapFragmentWhenCreated() {
         // Launch main activity
         ActivityScenario.launch(MainActivity::class.java)
         // Check currently displayed view
@@ -62,7 +64,7 @@ class MainActivityTest {
     }
 
     @Test
-    fun changeToAuthActivityWhenSignedOut(){
+    fun changeToAuthActivityWhenSignedOut() {
         // Launch main activity
         ActivityScenario.launch(MainActivity::class.java)
 

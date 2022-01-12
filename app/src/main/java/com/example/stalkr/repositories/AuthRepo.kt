@@ -1,8 +1,6 @@
 package com.example.stalkr.repositories
 
 import com.example.stalkr.enums.VerificationType
-import com.google.android.gms.tasks.Task
-import com.google.firebase.auth.AuthResult
 
 interface AuthRepo {
     interface OnFinishedListener {
@@ -13,5 +11,10 @@ interface AuthRepo {
         fun onValidPassword()
 
     }
-    fun loginWithEmailAndPassword(email: String, password: String, onFinishedListener: OnFinishedListener)
+
+    fun loginWithEmailAndPassword(
+        email: String,
+        password: String,
+        onFinishedListener: OnFinishedListener
+    )
 }

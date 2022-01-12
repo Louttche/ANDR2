@@ -1,13 +1,11 @@
-package com.example.stalkr
+package com.example.stalkr.fragments
 
 import android.Manifest
-import android.app.Activity
 import android.app.Activity.RESULT_OK
 import android.content.*
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationListener
 import android.os.Bundle
 import android.os.IBinder
 import android.util.Log
@@ -16,7 +14,10 @@ import android.widget.*
 import androidx.fragment.app.Fragment
 import androidx.core.content.ContextCompat.checkSelfPermission
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import com.example.stalkr.activities.AuthActivity
+import com.example.stalkr.AuthUserObject
+import com.example.stalkr.CustomInfoWindowForGoogleMap
+import com.example.stalkr.R
+import com.example.stalkr.activities.MainActivity
 import com.example.stalkr.data.UserProfileData
 
 import com.example.stalkr.databinding.FragmentMapBinding
@@ -24,7 +25,6 @@ import com.example.stalkr.services.LocationService
 import com.example.stalkr.services.NotificationManager
 import com.example.stalkr.services.SensorService
 import com.example.stalkr.utils.MapUtils
-import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.maps.GoogleMap
@@ -41,7 +41,8 @@ import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.firestore.SetOptions
 
 class MapFragment : Fragment(),
-    OnMapReadyCallback, GoogleMap.OnMarkerClickListener, LocationListener,
+    OnMapReadyCallback, GoogleMap.OnMarkerClickListener,
+    GoogleMap.OnInfoWindowClickListener,
     GoogleMap.OnCameraMoveStartedListener,
     GoogleMap.OnCameraMoveListener,
     GoogleMap.OnCameraMoveCanceledListener,
@@ -56,6 +57,7 @@ class MapFragment : Fragment(),
 
     // temp - for debug
     private var uid: String = Firebase.auth.currentUser!!.uid
+
     //private val currentUser get() = AuthActivity.userData
     // MAP
     private var mapView: MapView? = null
@@ -119,8 +121,8 @@ class MapFragment : Fragment(),
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
-        Log.d(TAG, "onCreateView - MapFragment");
+    ): View {
+        Log.d(TAG, "onCreateView - MapFragment")
 
         // Inflate the layout for this fragment
         _binding = FragmentMapBinding.inflate(inflater, container, false)
@@ -150,7 +152,7 @@ class MapFragment : Fragment(),
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        Log.d(TAG, "onViewCreated - MapFragment");
+        Log.d(TAG, "onViewCreated - MapFragment")
 
         mapView = _binding!!.mapView
         mapView!!.onCreate(savedInstanceState)
@@ -158,7 +160,7 @@ class MapFragment : Fragment(),
         val textViewDirection = view.findViewById<TextView>(R.id.textViewDirection)
         val imageViewCompass = view.findViewById<ImageView>(R.id.imageViewCompass)
 
-        broadcastReceiver = object: BroadcastReceiver() {
+        broadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
                 val direction = intent.getStringExtra(SensorService.KEY_DIRECTION)
                 val angle = intent.getDoubleExtra(SensorService.KEY_ANGLE, 0.0)
@@ -197,7 +199,7 @@ class MapFragment : Fragment(),
         }
     }
 
-    private fun initLocationService(){
+    private fun initLocationService() {
         Log.d(TAG, "on initLocationService")
 
         // Setup Location Callback
@@ -217,14 +219,14 @@ class MapFragment : Fragment(),
             }
         )
 
-        mapView!!.getMapAsync(this);
-        locationService.createLocationRequest(); // will start locationListener too
+        mapView!!.getMapAsync(this)
+        locationService.createLocationRequest() // will start locationListener too
 
         locationInitiated = true
     }
 
-    private fun boundLocationService(){
-        if (!bound){
+    private fun boundLocationService() {
+        if (!bound) {
             Log.d("seq", "Bounding to services...")
             Intent(requireContext(), LocationService::class.java).also { intent ->
                 activity?.bindService(intent, connection, Context.BIND_AUTO_CREATE)
@@ -244,6 +246,7 @@ class MapFragment : Fragment(),
         // Set up the custom info window
         val customInfoWindow = CustomInfoWindowForGoogleMap(requireContext())
         mMap!!.setInfoWindowAdapter(customInfoWindow)
+        mMap.setOnInfoWindowClickListener(this)
 
         setupMap()
     }
@@ -304,10 +307,10 @@ class MapFragment : Fragment(),
     fun setupLocationViewport() {
         if (changeBounds) {
             // if marker goes beyond the view bounds, center the camera on user
-            var meters_offset: Double = 30.0
-            var latOffset: Double = MapUtils.metersToLat(meters_offset) // y
-            var longOffset: Double =
-                MapUtils.metersToLong(meters_offset, currentLocation.latitude) // x
+            val metersOffset = 30.0
+            val latOffset: Double = MapUtils.metersToLat(metersOffset) // y
+            val longOffset: Double =
+                MapUtils.metersToLong(metersOffset, currentLocation.latitude) // x
 
             userPositionViewport = LatLngBounds(
                 LatLng(
@@ -407,7 +410,7 @@ class MapFragment : Fragment(),
      * @should Place a marker for other user on the map
      */
     private fun retrieveOtherUsersLocationFromDB() {
-        val userQuery = AuthActivity.db.collection("users")
+        val userQuery = FirebaseFirestore.getInstance().collection("users")
             .whereNotEqualTo("uid", AuthUserObject.uid)
             .get()
 
@@ -419,7 +422,7 @@ class MapFragment : Fragment(),
 
                 val otherUser = UserProfileData(document.get("uid").toString())
                 // Make sure the user is updated from the DB before displaying info about them
-                otherUser.updateUserProfileFromDB(document)
+                otherUser.UpdateUserProfileFromDB(document)
                 placeOtherMarkerOnMap(latLng, otherUser)
                 // Check if other user in 10 meters range
 
@@ -431,7 +434,7 @@ class MapFragment : Fragment(),
 
             }
             userQuery.addOnFailureListener { exception ->
-                Log.w(ContentValues.TAG, "Error getting documents.", exception)
+                Log.w(TAG, "Error getting documents.", exception)
             }
             // Filter user markers by radius of 1000m
             filterOtherMarkersByRadius(1000.0)
@@ -464,12 +467,11 @@ class MapFragment : Fragment(),
      */
     private fun filterOtherMarkersByRadius(offsetInMeter: Double) {
 
-        otherUserProfileLocationMarkers?.forEach { (otherUser, marker) ->
+        otherUserProfileLocationMarkers?.forEach { (_, marker) ->
             val latLng = LatLng(marker.position.latitude, marker.position.longitude)
             if (isFilteredByRadius) {
                 marker.isVisible = isOtherUserInBound(offsetInMeter, latLng)
-            }
-            else {
+            } else {
                 marker.isVisible = true
             }
         }
@@ -499,7 +501,7 @@ class MapFragment : Fragment(),
         Log.d(TAG, "MainActivity - onActivityResult")
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == REQUEST_CHECK_SETTINGS) {
-            if (resultCode == Activity.RESULT_OK) {
+            if (resultCode == RESULT_OK) {
                 TODO("Not yet implemented")
             }
         }
@@ -523,12 +525,14 @@ class MapFragment : Fragment(),
                         userQuery.addOnSuccessListener {
                             try {
                                 AuthUserObject.pfpURL = uri.toString()
-                                userCollectionRef.document(it.first().id).set(userProfileImageURL, SetOptions.merge())
+                                userCollectionRef.document(it.first().id)
+                                    .set(userProfileImageURL, SetOptions.merge())
                             } catch (e: NoSuchElementException) {
                                 Log.d(TAG, "No such element - $e")
                             }
 
-                            Toast.makeText(requireContext(), "Image Uploaded!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(requireContext(), "Image Uploaded!", Toast.LENGTH_SHORT)
+                                .show()
                         }
                     }
                 }
@@ -538,7 +542,7 @@ class MapFragment : Fragment(),
 
     override fun onPause() {
         super.onPause()
-        if (bound){
+        if (bound) {
             activity?.unbindService(connection)
             bound = false
             locationInitiated = false
@@ -546,11 +550,13 @@ class MapFragment : Fragment(),
         mapView!!.onPause()
     }
 
-    override fun onResume() {
+    /*override fun onResume() {
         super.onResume()
         boundLocationService()
-        mapView!!.onResume()
+        mapView?.onResume()
+        super.onResume()
     }
+    */
 
     /* CAMERA STUFF */
 
@@ -570,26 +576,34 @@ class MapFragment : Fragment(),
 
     // while the camera is moving or the user is interacting with the touch screen.
     override fun onCameraMove() {
-        Log.d(ContentValues.TAG, "onCameraMove")
+        Log.d(TAG, "onCameraMove")
     }
 
     // when the current camera movement has been interrupted.
     override fun onCameraMoveCanceled() {
-        Log.d(ContentValues.TAG, "onCameraMoveCanceled")
+        Log.d(TAG, "onCameraMoveCanceled")
     }
 
     // when the camera stops moving and the user has stopped interacting with the map.
     override fun onCameraIdle() {
-        Log.d(ContentValues.TAG, "onCameraIdle")
+        Log.d(TAG, "onCameraIdle")
     }
 
     override fun onDestroyView() {
-        LocalBroadcastManager.getInstance(this.requireContext()).unregisterReceiver(broadcastReceiver)
+        LocalBroadcastManager.getInstance(this.requireContext())
+            .unregisterReceiver(broadcastReceiver)
         super.onDestroyView()
         _binding = null
     }
 
-    override fun onLocationChanged(p0: Location) {
-        TODO("Not yet implemented")
+    override fun onInfoWindowClick(p0: Marker) {
+        for ((userData, marker) in otherUserProfileLocationMarkers!!) {
+            if (marker == p0) {
+                Log.d("wow", "onInfoWindowClick - " + userData.name)
+
+                val action = MapFragmentDirections.actionMapFragmentToProfileFragment(userData.uid)
+                MainActivity.navHostFragment!!.navController.navigate(action)
+            }
+        }
     }
 }

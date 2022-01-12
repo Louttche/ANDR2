@@ -1,6 +1,6 @@
 package com.example.stalkr
 
-class Verification {
+class Validation {
     private var isEmailEmpty = false
     private var isPasswordEmpty = false
 
@@ -9,14 +9,15 @@ class Verification {
         return if (email.isEmpty()) {
             isEmailEmpty = true
             false
-        } else  {
+        } else {
             isEmailEmpty = false
             emailRegex.toRegex().matches(email)
         }
     }
 
     fun isPasswordValid(password: String): Boolean {
-        val passwordRegex = ("^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[@#\$%^&+=!])(?=\\S+\$).{4,}\$")
+        val passwordRegex =
+            ("^(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[@#\$%^&+=!])(?=\\S+\$).{4,}\$")
         return if (password.isEmpty()) {
             isPasswordEmpty = true
             false

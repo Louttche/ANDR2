@@ -6,16 +6,22 @@
     app:startDestination="@id/mapFragment">
     <fragment
         android:id="@+id/mapFragment"
-        android:name="com.example.stalkr.MapFragment"
+        android:name="com.example.stalkr.fragments.MapFragment"
         android:label="fragment_map"
         tools:layout="@layout/fragment_map" >
         <action
             android:id="@+id/action_mapFragment_to_profileFragment"
-            app:destination="@id/profileFragment" />
+            app:destination="@id/profileFragment"
+            app:popEnterAnim="@anim/nav_default_enter_anim"
+            app:popUpTo="@id/profileFragment" />
         <action
             android:id="@+id/action_mapFragment_to_accountFragment"
-            app:destination="@id/accountFragment" />
+            app:destination="@id/accountFragment"
+            app:popEnterAnim="@anim/nav_default_enter_anim"
+            app:popUpTo="@id/accountFragment"
+            app:popUpToInclusive="false" />
     </fragment>
+
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.stalkr.fragments.ProfileFragment"
@@ -23,8 +29,13 @@
         tools:layout="@layout/fragment_profile" >
         <action
             android:id="@+id/action_profileFragment_to_mapFragment"
-            app:destination="@id/mapFragment" />
+            app:destination="@id/mapFragment"/>
+        <argument
+            android:name="userID"
+            app:argType="string"
+            android:defaultValue="1" />
     </fragment>
+
     <fragment
         android:id="@+id/accountFragment"
         android:name="com.example.stalkr.fragments.AccountFragment"
@@ -34,4 +45,5 @@
             android:id="@+id/action_accountFragment_to_mapFragment"
             app:destination="@id/mapFragment" />
     </fragment>
+    <action android:id="@+id/action_global_mapFragment" app:destination="@id/mapFragment" />
 </navigation>
