@@ -1,6 +1,5 @@
 package com.example.stalkr.activities
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -20,13 +19,10 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.stalkr.AuthUserObject
 import com.example.stalkr.R
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
-import com.example.stalkr.activities.AuthActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.example.stalkr.databinding.ActivityMainBinding
-import com.example.stalkr.services.SensorService
+import com.example.stalkr.services.CompassService
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -34,11 +30,14 @@ import com.google.firebase.ktx.Firebase
 import java.lang.NullPointerException
 import androidx.navigation.ui.AppBarConfiguration
 import android.content.DialogInterface
+import android.content.pm.PackageManager
+import com.example.stalkr.fragments.MapFragment
 
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var compassIntent: Intent
 
     companion object NavData {
         var navHostFragment: NavHostFragment? = null
@@ -52,6 +51,9 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Init compass intent service
+        compassIntent = Intent(this, CompassService::class.java)
 
         navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment? ?: return
@@ -165,20 +167,39 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            MapFragment.LOCATION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty()) {
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        val mapFragment =
+                            navHostFragment?.childFragmentManager?.primaryNavigationFragment
+                        if (mapFragment is MapFragment) {
+                            // If permission is granted started getting user location
+                            mapFragment.startLocation()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun onResume() {
-        startForegroundServiceForSensors(false)
         super.onResume()
+
+        // Start compass service
+        startService(compassIntent)
     }
 
     override fun onPause() {
-        startForegroundServiceForSensors(true)
         super.onPause()
-    }
 
-    private fun startForegroundServiceForSensors(background: Boolean) {
-        val intent = Intent(this, SensorService::class.java)
-        intent.putExtra(SensorService.KEY_BACKGROUND, background)
-        ContextCompat.startForegroundService(this, intent)
+        // Stop compass service
+        stopService(compassIntent)
     }
-
 }

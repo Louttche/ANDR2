@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.app.Service
 import android.content.ComponentName
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -13,14 +12,11 @@ import android.location.Location
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
-import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 
-class LocationService: Service() {
+class LocationService : Service() {
     companion object {
         private const val LOCATION_REQUEST_CODE = 1
         private const val REQUEST_CHECK_SETTINGS = 2
@@ -42,7 +38,6 @@ class LocationService: Service() {
     }
 
     fun setupLocationService(context: Context, locationCallback: LocationCallback) {
-        Log.d(TAG,"on setupLocationService");
         this.context = context
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
@@ -52,7 +47,6 @@ class LocationService: Service() {
     }
 
     private fun startLocationListener() {
-        Log.d(TAG,"on startLocationListener");
         if (ContextCompat.checkSelfPermission(
                 context,
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -67,7 +61,6 @@ class LocationService: Service() {
     }
 
     fun lastLocation(callback: (location: Location) -> Unit) {
-        Log.d(TAG,"on lastLocation");
         if (checkSelfPermission(
                 Manifest.permission.ACCESS_FINE_LOCATION
             ) == PackageManager.PERMISSION_GRANTED && checkSelfPermission(
@@ -75,13 +68,14 @@ class LocationService: Service() {
             ) == PackageManager.PERMISSION_GRANTED
         ) {
             fusedLocationClient.lastLocation.addOnSuccessListener(context as Activity) { location ->
-                callback(location)
+                if (location != null) {
+                    callback(location)
+                }
             }
         }
     }
 
     fun createLocationRequest() {
-        Log.d(TAG,"on createLocationRequest");
         locationRequest = LocationRequest()
         locationRequest.interval = 5000
         locationRequest.fastestInterval = 1000
@@ -114,14 +108,12 @@ class LocationService: Service() {
         }
     }
 
-    override fun onBind(intent: Intent?): IBinder? {
-        Log.d(TAG,"on LocationService onBind");
+    override fun onBind(intent: Intent?): IBinder {
         return binder
     }
 
     override fun onUnbind(intent: Intent?): Boolean {
         fusedLocationClient.removeLocationUpdates(locationCallback)
-        Log.d(TAG,"on LocationService onUnbind");
         return super.onUnbind(intent)
     }
 }
