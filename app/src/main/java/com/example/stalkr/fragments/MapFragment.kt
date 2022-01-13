@@ -46,6 +46,11 @@ import com.google.firebase.firestore.SetOptions
 import android.content.Intent
 
 import android.content.BroadcastReceiver
+import android.content.Context.LOCATION_SERVICE
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 
 
 class MapFragment : Fragment(),
@@ -113,7 +118,7 @@ class MapFragment : Fragment(),
     private lateinit var broadcastReceiver: BroadcastReceiver
 
     companion object {
-        private const val LOCATION_REQUEST_CODE = 1
+        const val LOCATION_REQUEST_CODE = 100
         private const val REQUEST_CHECK_SETTINGS = 2
         private const val PICK_IMAGE_REQUEST = 22
     }
@@ -179,35 +184,36 @@ class MapFragment : Fragment(),
         )
 
         notificationManager = NotificationManager(requireContext())
-
     }
 
-    private fun startLocation() {
-        // Initialize location manager
-        val locationManager =
-            activity?.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    fun startLocation() {
+        doAsync {
+            // Initialize location manager
+            val locationManager =
+                activity?.getSystemService(LOCATION_SERVICE) as LocationManager
 
-        // First check for location permissions
-        if (!isAllowedToUseGPS()) {
-            // if permissions not granted, request them
-            requestPermissions(
-                arrayOf(
-                    Manifest.permission.ACCESS_FINE_LOCATION,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ),
-                LOCATION_REQUEST_CODE
-            )
-        } else {
-            // Check if gps or network provider is on
-            // if true then start getting user location
-            if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
-                locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
-            ) {
-                // Start location service
-                boundLocationService()
+            // First check for location permissions
+            if (!isAllowedToUseGPS()) {
+                // if permissions not granted, request them
+                ActivityCompat.requestPermissions(
+                    requireActivity(),
+                    arrayOf(
+                        Manifest.permission.ACCESS_FINE_LOCATION,
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                    ), LOCATION_REQUEST_CODE
+                )
             } else {
-                // Show GPS settings
-                showGpsSettings()
+                // Check if gps or network provider is on
+                // if true then start getting user location
+                if (locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) ||
+                    locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+                ) {
+                    // Start location service
+                    boundLocationService()
+                } else {
+                    // Show GPS settings
+                    showGpsSettings()
+                }
             }
         }
     }
@@ -330,23 +336,6 @@ class MapFragment : Fragment(),
             if (!userPositionViewport.contains(currentLatLng)) {
                 changeBounds = true
                 moveCamera(currentLocation)
-            }
-        }
-    }
-
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            LOCATION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty()) {
-                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                        startLocation()
-                    }
-                }
             }
         }
     }
@@ -555,11 +544,6 @@ class MapFragment : Fragment(),
 
     override fun onPause() {
         super.onPause()
-        if (bound) {
-            activity?.unbindService(connection)
-            bound = false
-            locationInitiated = false
-        }
         mapView?.onPause()
     }
 
@@ -569,6 +553,14 @@ class MapFragment : Fragment(),
         mapView?.onResume()
     }
 
+    override fun onStop() {
+        super.onStop()
+        if (bound) {
+            activity?.unbindService(connection)
+            bound = false
+            locationInitiated = false
+        }
+    }
     override fun onStart() {
         super.onStart()
         // Start getting current location

@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.app.Service
 import android.content.ComponentName
-import android.content.ContentValues.TAG
 import android.content.Context
 import android.content.Intent
 import android.content.IntentSender
@@ -13,10 +12,7 @@ import android.location.Location
 import android.os.Binder
 import android.os.IBinder
 import android.os.Looper
-import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.FragmentActivity
 import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.*
 

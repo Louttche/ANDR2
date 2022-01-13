@@ -30,6 +30,8 @@ import com.google.firebase.ktx.Firebase
 import java.lang.NullPointerException
 import androidx.navigation.ui.AppBarConfiguration
 import android.content.DialogInterface
+import android.content.pm.PackageManager
+import com.example.stalkr.fragments.MapFragment
 
 
 class MainActivity : AppCompatActivity() {
@@ -162,6 +164,28 @@ class MainActivity : AppCompatActivity() {
             val notificationManager: NotificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             notificationManager.createNotificationChannel(channel)
+        }
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        when (requestCode) {
+            MapFragment.LOCATION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty()) {
+                    if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                        val mapFragment =
+                            navHostFragment?.childFragmentManager?.primaryNavigationFragment
+                        if (mapFragment is MapFragment) {
+                            // If permission is granted started getting user location
+                            mapFragment.startLocation()
+                        }
+                    }
+                }
+            }
         }
     }
 
