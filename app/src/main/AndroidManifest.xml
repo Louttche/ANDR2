@@ -42,10 +42,10 @@
             android:exported="true"
             android:label="@string/title_activity_main" />
 
-        <receiver android:name=".broadcastReceivers.ActionListener" />
+        <receiver android:name=".broadcastReceivers.NotificationListener" />
 
         <service
-            android:name=".services.SensorService"
+            android:name=".services.CompassService"
             android:enabled="true"
             android:exported="true" />
         <!--

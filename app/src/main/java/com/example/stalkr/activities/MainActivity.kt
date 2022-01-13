@@ -1,6 +1,5 @@
 package com.example.stalkr.activities
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -20,13 +19,10 @@ import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.stalkr.AuthUserObject
 import com.example.stalkr.R
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.navigation.Navigation
 import androidx.navigation.ui.NavigationUI
-import com.example.stalkr.activities.AuthActivity
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.example.stalkr.databinding.ActivityMainBinding
-import com.example.stalkr.services.SensorService
+import com.example.stalkr.services.CompassService
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
@@ -166,18 +162,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
-        startForegroundServiceForSensors(false)
         super.onResume()
+        // Remove compass notification
+        startForegroundServiceForSensors(false)
     }
 
     override fun onPause() {
-        startForegroundServiceForSensors(true)
         super.onPause()
+        // Show compass notification
+        startForegroundServiceForSensors(true)
     }
 
     private fun startForegroundServiceForSensors(background: Boolean) {
-        val intent = Intent(this, SensorService::class.java)
-        intent.putExtra(SensorService.KEY_BACKGROUND, background)
+        val intent = Intent(this, CompassService::class.java)
+        intent.putExtra(CompassService.KEY_BACKGROUND, background)
         ContextCompat.startForegroundService(this, intent)
     }
 
