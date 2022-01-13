@@ -35,6 +35,7 @@ import android.content.DialogInterface
 class MainActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityMainBinding
+    private lateinit var compassIntent: Intent
 
     companion object NavData {
         var navHostFragment: NavHostFragment? = null
@@ -48,6 +49,9 @@ class MainActivity : AppCompatActivity() {
 
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Init compass intent service
+        compassIntent = Intent(this, CompassService::class.java)
 
         navHostFragment = supportFragmentManager
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment? ?: return
@@ -163,20 +167,15 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Remove compass notification
-        startForegroundServiceForSensors(false)
+
+        // Start compass service
+        startService(compassIntent)
     }
 
     override fun onPause() {
         super.onPause()
-        // Show compass notification
-        startForegroundServiceForSensors(true)
-    }
 
-    private fun startForegroundServiceForSensors(background: Boolean) {
-        val intent = Intent(this, CompassService::class.java)
-        intent.putExtra(CompassService.KEY_BACKGROUND, background)
-        ContextCompat.startForegroundService(this, intent)
+        // Stop compass service
+        stopService(compassIntent)
     }
-
 }
