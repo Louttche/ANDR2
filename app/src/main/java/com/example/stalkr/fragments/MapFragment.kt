@@ -2,7 +2,6 @@ package com.example.stalkr.fragments
 
 import android.Manifest
 import android.annotation.SuppressLint
-import android.app.Activity.RESULT_OK
 import android.content.*
 import android.content.ContentValues.TAG
 import android.content.pm.PackageManager
@@ -41,16 +40,12 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
 
-import com.google.firebase.firestore.SetOptions
-
 import android.content.Intent
 
 import android.content.BroadcastReceiver
 import android.content.Context.LOCATION_SERVICE
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
+import com.example.stalkr.utils.ImageUtils
 import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 
 
 class MapFragment : Fragment(),
@@ -120,7 +115,7 @@ class MapFragment : Fragment(),
     companion object {
         const val LOCATION_REQUEST_CODE = 100
         private const val REQUEST_CHECK_SETTINGS = 2
-        private const val PICK_IMAGE_REQUEST = 22
+        const val PICK_IMAGE_REQUEST = 22
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -143,7 +138,7 @@ class MapFragment : Fragment(),
         }
 
         // Picture upload click handler
-        binding.btnMyPicture.setOnClickListener {
+        binding.btnAddPicture.setOnClickListener {
             val intent = Intent()
             intent.type = "image/*"
             intent.action = Intent.ACTION_GET_CONTENT
@@ -508,38 +503,8 @@ class MapFragment : Fragment(),
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        // Profile image upload
-        if (requestCode == PICK_IMAGE_REQUEST && resultCode == RESULT_OK && data != null && data.data != null) {
-            // Get the Uri of data
-            val filePath = data.data
-            if (filePath != null) {
-                val profileImageRef = storageRef.child("profileImages/$uid")
-
-                profileImageRef.putFile(filePath).addOnSuccessListener {
-                    profileImageRef.downloadUrl.addOnSuccessListener { uri ->
-                        val userProfileImageURL = hashMapOf(
-                            "profileImageURL" to uri.toString()
-                        )
-
-                        val userQuery = userCollectionRef
-                            .whereEqualTo("uid", this.uid)
-                            .get()
-                        userQuery.addOnSuccessListener {
-                            try {
-                                AuthUserObject.pfpURL = uri.toString()
-                                userCollectionRef.document(it.first().id)
-                                    .set(userProfileImageURL, SetOptions.merge())
-                            } catch (e: NoSuchElementException) {
-                                Log.d(TAG, "No such element - $e")
-                            }
-
-                            Toast.makeText(requireContext(), "Image Uploaded!", Toast.LENGTH_SHORT)
-                                .show()
-                        }
-                    }
-                }
-            }
-        }
+        // Upload image
+        ImageUtils.uploadImage(requireContext(), requestCode, resultCode, data, storageRef, uid, binding, userCollectionRef)
     }
 
     override fun onPause() {
