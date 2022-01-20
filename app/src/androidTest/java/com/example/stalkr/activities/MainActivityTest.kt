@@ -15,7 +15,6 @@ import java.lang.IllegalStateException
 import android.util.Log
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.rule.GrantPermissionRule
-import com.adevinta.android.barista.interaction.BaristaMenuClickInteractions.clickMenu
 import org.junit.*
 
 @RunWith(AndroidJUnit4ClassRunner::class)
@@ -61,16 +60,5 @@ class MainActivityTest {
         ActivityScenario.launch(MainActivity::class.java)
         // Check currently displayed view
         onView(withId(R.id.map)).check(matches(isDisplayed()))
-    }
-
-    @Test
-    fun changeToAuthActivityWhenSignedOut() {
-        // Launch main activity
-        ActivityScenario.launch(MainActivity::class.java)
-
-        // Act signing out from the actionbar menu
-        clickMenu(R.id.action_logout)
-        // Check currently displayed view
-        onView(withId(R.id.auth)).check(matches(isDisplayed()))
     }
 }
