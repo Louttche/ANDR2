@@ -19,6 +19,7 @@
         android:id="@+id/btn_myLocation"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
         android:backgroundTint="#4C494E"
         android:contentDescription="@string/my_location_button"
         android:src="@android:drawable/ic_menu_mylocation"
@@ -38,7 +39,7 @@
         layout="@layout/view_compass_direction"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal|top"
+        android:layout_gravity="top|center"
         android:layout_marginEnd="8dp" />
 
 </FrameLayout>
