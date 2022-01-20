@@ -45,6 +45,7 @@ import android.content.Intent
 import android.content.BroadcastReceiver
 import android.content.Context.LOCATION_SERVICE
 import com.example.stalkr.utils.ImageUtils
+import com.google.firebase.firestore.Source
 import org.jetbrains.anko.doAsync
 
 
@@ -387,7 +388,18 @@ class MapFragment : Fragment(),
             if (otherUserProfileLocationMarkers!!.any { it.key == userProfile }) {
                 // TODO: old user marker stays where it is
                 otherUserProfileLocationMarkers!![userProfile]!!.position = latLng
+
+                // Remove marker if user i not active
+                if (!userProfile.isActive) {
+                    otherUserProfileLocationMarkers!![userProfile]?.remove()
+                    otherUserProfileLocationMarkers?.remove(userProfile)
+                }
             } else {
+                // Return if user is not active
+                if (!userProfile.isActive) {
+                    return
+                }
+
                 val markerOptions = MarkerOptions()
                 markerOptions.position(latLng)
                 markerOptions.anchor(0.5.toFloat(), 0.5.toFloat())
@@ -413,7 +425,7 @@ class MapFragment : Fragment(),
     private fun retrieveOtherUsersLocationFromDB() {
         val userQuery = FirebaseFirestore.getInstance().collection("users")
             .whereNotEqualTo("uid", AuthUserObject.uid)
-            .get()
+            .get(Source.SERVER)
 
         userQuery.addOnSuccessListener {
             for (document in it) {
@@ -433,12 +445,12 @@ class MapFragment : Fragment(),
                 // Shows notification when users are within the radius of 10m
                 checkForStalkers(otherUser, latLng)
 
+                userQuery.addOnFailureListener { exception ->
+                    Log.w(TAG, "Error getting documents.", exception)
+                }
+                // Filter user markers by radius of 1000m
+                filterOtherMarkersByRadius(1000.0)
             }
-            userQuery.addOnFailureListener { exception ->
-                Log.w(TAG, "Error getting documents.", exception)
-            }
-            // Filter user markers by radius of 1000m
-            filterOtherMarkersByRadius(1000.0)
         }
         // Filter user markers by radius of 1000m (seems to be quicker?)
         filterOtherMarkersByRadius(1000.0)
@@ -504,7 +516,16 @@ class MapFragment : Fragment(),
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         // Upload image
-        ImageUtils.uploadImage(requireContext(), requestCode, resultCode, data, storageRef, uid, binding, userCollectionRef)
+        ImageUtils.uploadImage(
+            requireContext(),
+            requestCode,
+            resultCode,
+            data,
+            storageRef,
+            uid,
+            binding,
+            userCollectionRef
+        )
     }
 
     override fun onPause() {
@@ -526,6 +547,7 @@ class MapFragment : Fragment(),
             locationInitiated = false
         }
     }
+
     override fun onStart() {
         super.onStart()
         // Start getting current location
