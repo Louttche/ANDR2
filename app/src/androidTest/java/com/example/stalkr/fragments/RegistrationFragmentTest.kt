@@ -36,6 +36,13 @@ class RegistrationFragmentTest {
         // Click register button
         materialButton.perform(click())
 
+        // Sleep for 5 seconds
+        try {
+            Thread.sleep(5000)
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+
         // Check if empty email error message is shown when no value is entered
         onView(withText(R.string.email_error)).check(matches(isDisplayed()))
 
@@ -71,6 +78,13 @@ class RegistrationFragmentTest {
         
         // Click register button
         onView(withId(R.id.buttonRegisterR)).perform(click())
+
+        // Sleep for 5 seconds
+        try {
+            Thread.sleep(5000)
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
 
         // Check if invalid email error message is shown when value is invalid
         onView(withText(R.string.error_invalid_email)).check(matches(isDisplayed()))
