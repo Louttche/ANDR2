@@ -12,14 +12,12 @@ import android.content.ContentValues.TAG
 import android.content.Intent
 import android.view.Menu
 import android.view.MenuItem
-import androidx.core.content.ContextCompat
 
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.example.stalkr.AuthUserObject
 import com.example.stalkr.R
-import androidx.navigation.ui.NavigationUI
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.example.stalkr.databinding.ActivityMainBinding
 import com.example.stalkr.services.CompassService
@@ -59,24 +57,8 @@ class MainActivity : AppCompatActivity() {
             .findFragmentById(R.id.nav_host_fragment) as NavHostFragment? ?: return
         val navController = navHostFragment!!.navController
 
-        appBarConfiguration = AppBarConfiguration.Builder(navController.graph).build()
-        NavigationUI.setupActionBarWithNavController(
-            this,
-            navController, appBarConfiguration!!
-        )
-
-        // hide fragment titles from actionbar
-        supportActionBar!!.setDisplayShowTitleEnabled(false)
-
         val bottomNav = findViewById<BottomNavigationView>(R.id.bottomNavBar)
         bottomNav?.setupWithNavController(navController)
-    }
-
-    /* NAVIGATION */
-    override fun onSupportNavigateUp(): Boolean {
-        // TODO: FIX
-        return NavigationUI.navigateUp(navHostFragment!!.navController, appBarConfiguration!!)
-                || super.onSupportNavigateUp()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {

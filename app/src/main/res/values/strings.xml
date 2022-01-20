@@ -46,6 +46,8 @@
     <string name="activity_account">ACTIVITY</string>
     <string name="bio_content_account">Stalking your worst nightmares and... happiest places :D</string>
     <string name="user_photo_account">user_photo_account</string>
+    <string name="add_person_icon">add person icon</string>
+    <string name="location_icon">location icon</string>
 
     <string-array name="filter_names">
         <item>Sort by any</item>

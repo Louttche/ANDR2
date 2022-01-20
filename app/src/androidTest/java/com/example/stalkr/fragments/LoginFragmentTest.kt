@@ -1,5 +1,6 @@
 package com.example.stalkr.fragments
 
+import androidx.test.espresso.Espresso
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.click
 import androidx.test.espresso.action.ViewActions.typeText
@@ -29,6 +30,13 @@ class LoginFragmentTest {
 
         materialButton.perform(click())
 
+        // Sleep for 5 seconds
+        try {
+            Thread.sleep(5000)
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+
         // Check if empty email error message is shown when no value is entered
         onView(withText(R.string.email_error)).check(matches(isDisplayed()))
 
@@ -42,9 +50,24 @@ class LoginFragmentTest {
         val textInputEmail = onView(withId(R.id.textInputEmail))
         val textInputPassword = onView(withId(R.id.textInputPassword))
 
-        textInputEmail.perform(typeText("ddfk"))
-        textInputPassword.perform(typeText("dsf"))
+        // Enter wrong email into email text box
+        textInputEmail.perform(typeText("wrongEmail"))
+
+        // Enter wrong password into email text box
+        textInputPassword.perform(typeText("wrongPassword"))
+
+        // Close keyboard
+        Espresso.pressBack()
+
+        // Try to login
         materialButton.perform(click())
+
+        // Sleep for 5 seconds
+        try {
+            Thread.sleep(5000)
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
 
         // Check if invalid email error message is shown when no value is entered
         onView(withText(R.string.error_invalid_email)).check(matches(isDisplayed()))

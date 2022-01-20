@@ -11,7 +11,6 @@ import android.view.ViewGroup
 import com.example.stalkr.utils.ImageUtils
 
 import androidx.navigation.fragment.navArgs
-import com.example.stalkr.activities.AuthActivity
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.QueryDocumentSnapshot
 
@@ -20,13 +19,14 @@ class ProfileFragment : Fragment() {
     private var _binding: FragmentProfileBinding? = null
     private val binding get() = _binding!!
 
-    private val args: ProfileFragmentArgs by navArgs<ProfileFragmentArgs>()
+    private val args: ProfileFragmentArgs by navArgs()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
-    ): View? {
+    ): View {
         _binding = FragmentProfileBinding.inflate(inflater, container, false)
+
         return binding.root
     }
 
@@ -42,10 +42,10 @@ class ProfileFragment : Fragment() {
             .get()
         userQuery.addOnSuccessListener {
             try {
-                var document : QueryDocumentSnapshot = it.first()
+                var document: QueryDocumentSnapshot = it.first()
 
-                var name = document.data["name"].toString()
-                var pfpURL = document.data["profileImageURL"].toString()
+                val name = document.data["name"].toString()
+                val pfpURL = document.data["profileImageURL"].toString()
 
                 binding.tvUsernameContentProfile.text = name
                 ImageUtils.urlImageToImageView(pfpURL, binding.ivAvatarProfile, requireContext())
