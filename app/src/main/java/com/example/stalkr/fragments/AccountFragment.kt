@@ -33,9 +33,13 @@ class AccountFragment : Fragment() {
         // Inflate the layout for this fragment
         _binding = FragmentAccountBinding.inflate(inflater, container, false)
 
-        if (AuthUserObject != null){
+        if (AuthUserObject != null) {
             binding.tvUsernameAccount.text = AuthUserObject.name
-            ImageUtils.urlImageToImageView(AuthUserObject.pfpURL, binding.ivAvatarAccount, requireContext())
+            ImageUtils.urlImageToImageView(
+                AuthUserObject.pfpURL,
+                binding.ivAvatarAccount,
+                requireContext()
+            )
         }
 
         // Picture upload click handler
@@ -58,6 +62,15 @@ class AccountFragment : Fragment() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         // Upload image
-        ImageUtils.uploadImage(requireContext(), requestCode, resultCode, data, storageRef, uid, binding, userCollectionRef)
+        ImageUtils.uploadImage(
+            requireContext(),
+            requestCode,
+            resultCode,
+            data,
+            storageRef,
+            uid,
+            binding,
+            userCollectionRef
+        )
     }
 }
