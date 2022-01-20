@@ -7,7 +7,9 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import com.example.stalkr.AuthUserObject
+import com.example.stalkr.R
 import com.example.stalkr.utils.ImageUtils
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.firestore.FirebaseFirestore
@@ -18,6 +20,7 @@ class AccountFragment : Fragment() {
 
     private var _binding: FragmentAccountBinding? = null
     private val binding get() = _binding!!
+
 
     // AUTH + DB
     private val userCollectionRef = FirebaseFirestore.getInstance().collection("users")

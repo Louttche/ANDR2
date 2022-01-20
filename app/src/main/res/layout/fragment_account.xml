@@ -17,6 +17,9 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        android:foreground="@drawable/ic_baseline_edit_24"
+        android:foregroundGravity="right"
+        android:foregroundTintMode="add"
         tools:ignore="ImageContrastCheck" />
 
     <TextView
@@ -83,4 +86,5 @@
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_bio_content_account" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

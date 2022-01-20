@@ -24,15 +24,15 @@
         android:src="@android:drawable/ic_menu_mylocation"
         tools:ignore="SpeakableTextPresentCheck,ImageContrastCheck" />
 
-    <ImageButton
-        android:id="@+id/btnAddPicture"
-        android:layout_width="58dp"
-        android:layout_height="53dp"
-        android:layout_gravity="end"
-        android:backgroundTint="#4C494E"
-        android:contentDescription="@string/profile_photo_of_user"
-        android:src="@drawable/ic_baseline_person_24"
-        tools:ignore="@string/profile_photo_of_user" />
+<!--    <ImageButton-->
+<!--        android:id="@+id/btnAddPicture"-->
+<!--        android:layout_width="58dp"-->
+<!--        android:layout_height="53dp"-->
+<!--        android:layout_gravity="end"-->
+<!--        android:backgroundTint="#4C494E"-->
+<!--        android:contentDescription="@string/profile_photo_of_user"-->
+<!--        android:src="@drawable/ic_baseline_person_24"-->
+<!--        tools:ignore="@string/profile_photo_of_user" />-->
 
     <include
         layout="@layout/view_compass_direction"

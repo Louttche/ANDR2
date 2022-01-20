@@ -138,18 +138,18 @@ class MapFragment : Fragment(),
         }
 
         // Picture upload click handler
-        binding.btnAddPicture.setOnClickListener {
-            val intent = Intent()
-            intent.type = "image/*"
-            intent.action = Intent.ACTION_GET_CONTENT
-            startActivityForResult(
-                Intent.createChooser(
-                    intent,
-                    "Select Image from here..."
-                ),
-                PICK_IMAGE_REQUEST
-            )
-        }
+//        binding.btnAddPicture.setOnClickListener {
+//            val intent = Intent()
+//            intent.type = "image/*"
+//            intent.action = Intent.ACTION_GET_CONTENT
+//            startActivityForResult(
+//                Intent.createChooser(
+//                    intent,
+//                    "Select Image from here..."
+//                ),
+//                PICK_IMAGE_REQUEST
+//            )
+//        }
 
         return binding.root
     }
