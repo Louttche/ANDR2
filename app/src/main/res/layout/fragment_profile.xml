@@ -11,54 +11,75 @@
         android:id="@+id/iv_avatar_profile"
         android:layout_width="93dp"
         android:layout_height="93dp"
-        android:layout_marginTop="64dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginEnd="32dp"
         android:contentDescription="@string/user_photo"
         android:src="@drawable/ic_baseline_person_24"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.257"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_baseline_person_24"
         tools:ignore="ImageContrastCheck" />
 
-    <Button
-        android:id="@+id/btn_stalk"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="28dp"
-        android:layout_marginTop="32dp"
-        android:text="@string/stalk"
-        app:layout_constraintStart_toEndOf="@+id/btn_add"
-        app:layout_constraintTop_toBottomOf="@+id/iv_avatar_profile" />
-
-    <Button
-        android:id="@+id/btn_add"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="44dp"
-        android:layout_marginTop="32dp"
-        android:text="@string/add"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/iv_avatar_profile" />
-
-    <Button
-        android:id="@+id/btn_message"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
-        android:text="@string/message"
+    <ImageButton
+        android:id="@+id/btnMessage"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_gravity="end"
+        android:layout_marginEnd="32dp"
+        android:background="@drawable/bg_rounded"
+        android:clickable="false"
+        android:contentDescription="@string/profile_photo_of_user"
+        android:src="@drawable/ic_baseline_message_24"
+        app:layout_constraintBottom_toBottomOf="@+id/btnShowLocation"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.465"
-        app:layout_constraintStart_toEndOf="@+id/btn_stalk"
-        app:layout_constraintTop_toBottomOf="@+id/iv_avatar_profile" />
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btnShowLocation"
+        app:layout_constraintTop_toTopOf="@+id/btnShowLocation"
+        tools:ignore="@string/profile_photo_of_user" />
+
+    <ImageButton
+        android:id="@+id/btnAddFriend"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:background="@drawable/bg_rounded"
+        android:clickable="false"
+        android:contentDescription="@string/add_person_icon"
+        android:src="@drawable/ic_baseline_person_add_24"
+        app:layout_constraintEnd_toStartOf="@+id/btnShowLocation"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/divider" />
+
+    <ImageButton
+        android:id="@+id/btnShowLocation"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        android:layout_marginEnd="32dp"
+        android:clickable="false"
+        android:contentDescription="@string/location_icon"
+        android:src="@drawable/ic_baseline_location_on_24"
+        android:background="@drawable/bg_rounded"
+        app:layout_constraintBottom_toBottomOf="@+id/btnAddFriend"
+        app:layout_constraintEnd_toStartOf="@+id/btnMessage"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/btnAddFriend"
+        app:layout_constraintTop_toTopOf="@+id/btnAddFriend"
+        app:layout_constraintVertical_bias="0.0" />
 
     <TextView
         android:id="@+id/tv_bio_content_profile"
         android:layout_width="316dp"
         android:layout_height="46dp"
+        android:layout_marginStart="32dp"
         android:layout_marginTop="8dp"
         android:text="@string/stalking_your_worst_nightmares_and_happiest_places_d"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.463"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_bio_title_content_profile" />
 
@@ -66,38 +87,65 @@
         android:id="@+id/tv_bio_title_content_profile"
         android:layout_width="49dp"
         android:layout_height="37dp"
-        android:layout_marginTop="32dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
         android:text="@string/bio"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.121"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/btn_stalk" />
+        app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
     <TextView
         android:id="@+id/tv_username_content_profile"
-        android:layout_width="100dp"
+        android:layout_width="wrap_content"
         android:layout_height="46dp"
-        android:layout_marginTop="88dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="32dp"
         android:text="@string/username_profile"
         android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.169"
-        app:layout_constraintStart_toEndOf="@+id/iv_avatar_profile"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/iv_avatar_profile" />
 
-    <TextView
-        android:id="@+id/tv_activity_content_profile"
-        android:layout_width="102dp"
-        android:layout_height="32dp"
-        android:layout_marginTop="28dp"
-        android:text="@string/activity_profile"
-        android:textSize="20sp"
-        android:textStyle="bold"
+    <View
+        android:id="@+id/divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:background="?android:attr/listDivider"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.142"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tv_username_content_profile" />
+
+    <View
+        android:id="@+id/divider2"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/btnAddFriend" />
+
+    <View
+        android:id="@+id/divider3"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="32dp"
+        android:background="?android:attr/listDivider"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tv_bio_content_profile" />
 
