@@ -1,3 +1,3 @@
 # ANDR2
 
-Android Studio project - Group 1
+Android Studio project (using Kotlin)
